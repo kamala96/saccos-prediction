@@ -1,0 +1,131 @@
+{% extends "base.html" %} {% block head %} {{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename= 'extended_beauty.css') }}" />
+{% endblock %} {% block content %}
+
+<!---Initialize structure of Title and house picture--->
+<center>
+    <div class="title">
+        <h1>Saccos Predictions Area</h1>
+    </div>
+    <!---Links/buttons to other websites--->
+    <!-- <div id="menu-outer">
+        <div class="table">
+            <ul id="horizontal-list">
+                <li><a href="https://flask.palletsprojects.com/en/2.0.x/" target="_blank" class="link"><span
+                            class="titleLink">Python Flask</span></a></li>
+                <li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html"
+                        target="_blank" class="link"><span class="titleLink">Scikit-Learn</span></a></li>
+            </ul>
+        </div>
+    </div> -->
+    <!---Containerize main page for styling--->
+    <div class="page">
+        <!---Containerize paragraph and form for styling--->
+        <div class="container">
+            <div class="intro">
+                <b>
+                    <p class="Note"><b>Note: Enter values which are reasonable to the context</b></p>
+                </b>
+            </div>
+
+
+
+            <!-- Tabs navs -->
+            <ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active" id="ex1-tab-1" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-1"
+                        role="tab" aria-controls="ex1-tabs-1" aria-selected="true">Capital Adequacy</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="ex1-tab-2" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-2"
+                        role="tab" aria-controls="ex1-tabs-2" aria-selected="false">Asset Quality</a>
+                </li>
+            </ul>
+            <!-- Tabs navs -->
+
+            <!-- Tabs content -->
+            <div class="tab-content" id="ex1-content">
+
+                <div class="tab-pane fade show active" id="ex1-tabs-1" role="tabpanel" aria-labelledby="ex1-tab-1">
+
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">@</span>
+                        <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+                      </div>
+                      
+                      <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Recipient's username" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                        <span class="input-group-text" id="basic-addon2">@example.com</span>
+                      </div>
+                      
+                      <label for="basic-url" class="form-label">Your vanity URL</label>
+                      <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon3">https://example.com/users/</span>
+                        <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3">
+                      </div>
+                      
+                      <div class="input-group mb-3">
+                        <span class="input-group-text">$</span>
+                        <input type="text" class="form-control" aria-label="Amount (to the nearest dollar)">
+                        <span class="input-group-text">.00</span>
+                      </div>
+                      
+                      <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Username" aria-label="Username">
+                        <span class="input-group-text">@</span>
+                        <input type="text" class="form-control" placeholder="Server" aria-label="Server">
+                      </div>
+                      
+                      <div class="input-group">
+                        <span class="input-group-text">With textarea</span>
+                        <textarea class="form-control" aria-label="With textarea"></textarea>
+                      </div>
+
+                    <!---Initialize form structure and inputs, set method to "POST"--->
+                    <form action="{{url_for('main.do_predict_post')}}" method="post" class="info">
+                        <input type="text" id="name" name="Average Income of Area" placeholder="Average Area Income"
+                            required="required" /><span style="color:red"> * </span>
+                        <br>
+                        <br>
+                        <input type="text" id="age" name="Average House Age" placeholder="Area House Age"
+                            required="required" /><span style="color:red"> * </span>
+                        <br>
+                        <br>
+                        <input type="text" id="rooms" name="Average Number of Rooms (living, patio etc.) "
+                            placeholder="Average Number of Rooms" required="required" /><span style="color:red"> *
+                        </span>
+                        <br>
+                        <br>
+                        <input type="text" id="bedrooms" name="Average Number of Bedrooms"
+                            placeholder="Number of Bedrooms" /><span style="color:red" required="required"> * </span>
+                        <br>
+                        <br>
+                        <input type="text" id="population" name="Average Area Population"
+                            placeholder="Average Area Population" /><span style="color:red" required="required"> *
+                        </span>
+                        <br>
+                        <br>
+                        <button type="submit" class="btn">Predict</button>
+                    </form>
+                </div>
+                <div class="tab-pane fade" id="ex1-tabs-2" role="tabpanel" aria-labelledby="ex1-tab-2">
+                    Tab 2 content
+                </div>
+            </div>
+            <!-- Tabs content -->
+
+
+
+            <br>
+
+            <br>
+            <!---Set placeholder for prediction output--->
+            <div class="pred">
+                <p class="result"><b>{{ prediction_text }}</b></p>
+            </div>
+        </div>
+    </div>
+</center>
+
+
+{% endblock %}
