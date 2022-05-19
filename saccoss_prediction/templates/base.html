@@ -3,7 +3,7 @@
 
 <head>
   {% block head %}
-  <title>Push-Ups Logger</title>
+  <title>Saccos Evaluation and Prediction System (SEPS)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename= 'images/muscle.ico') }}" />
   <link href="https://fonts.googleapis.com/css2?family=Arvo&display=swap" rel="stylesheet" />
@@ -29,36 +29,47 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="{{ url_for('main.index') }}">Push-Ups Logger</a>
+  <nav class="navbar navbar-expand-lg navbar-light container">
+    <a class="navbar-brand" href="{{ url_for('main.index') }}">
+      <h3>Saccos Evaluation and Prediction System </h3>
+    </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item active">
+    <ul class="navbar-nav mr-auto">
+
+      <li class="nav-item active">
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary" role="button"
+          aria-pressed="true">Home</a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{{ url_for('main.do_predict') }}" class="btn btn-outline-secondary mx-sm-1" role="button">Predict</a>
+      </li>
+
+      <!-- <li class="nav-item active">
           <a href="{{ url_for('main.user_workouts') }}" class="btn btn-outline-secondary" role="button">All Workouts</a>
         </li>
         <li class="nav-item">
           <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary" role="button"
             style="margin-left: 4px;">Account</a>
-        </li>
-      </ul>
-      <form class="form-inline my-2 my-lg-0">
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('main.new_workout') }}" class="btn btn-outline-primary" role="button">Add New Workout</a>
-        <a href="{{ url_for('main.do_predict') }}" class="btn btn-outline-primary" role="button">Predict</a>
-        {% endif %} {% if not current_user.is_authenticated %}
+        </li> -->
+    </ul>
+    <!-- <form class="form-inline my-2 my-lg-0"> -->
+    <!-- {% if current_user.is_authenticated %} -->
+    <!-- <a href="{{ url_for('main.new_workout') }}" class="btn btn-outline-primary" role="button">Add New Workout</a> -->
+    <!-- <a href="{{ url_for('main.do_predict') }}" class="btn btn-outline-primary" role="button">Predict</a> -->
+    <!-- {% endif %} {% if not current_user.is_authenticated %}
         <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary" role="button">Signup</a>
         <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary" role="button"
           style="margin-left: 4px;">Login</a>
         {% endif %} {% if current_user.is_authenticated %}
         <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger" role="button"
           style="margin-left: 4px;">Log Out</a>
-        {% endif %}
-      </form>
+        {% endif %} -->
+    <!-- </form> -->
     </div>
   </nav>
   {% block content %} {% endblock %}

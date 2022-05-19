@@ -6,13 +6,13 @@ from .models import User
 from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request
 from flask_login import current_user, login_required
-import pickle 
+from joblib import dump, load
 
 # A Blueprint is way to organize contents of your file
 
 main = Blueprint("main", __name__)
 
-model = pickle.load(open('model.pkl','rb'))
+model = load('prediction-models/y1_model.joblib')
 
 @main.route('/')
 def index():
@@ -91,7 +91,7 @@ def do_predict():
 def do_predict_post():
     
     #obtain all form values and place them in an array, convert into integers
-    int_features = [int(x) for x in request.form.values()]
+    int_features = [float(x) for x in request.form.values()]
     #Combine them all into a final numpy array
     final_features = [np.array(int_features)]
     #predict the price given the values inputted by user
@@ -102,7 +102,7 @@ def do_predict_post():
     
     #If the output is negative, the values entered are unreasonable to the context of the application
     #If the output is greater than 0, return prediction
-    if output < 0:
-        return render_template('do_predict.html', prediction_text = "Predicted Price is negative, values entered not reasonable")
-    elif output >= 0:
-        return render_template('do_predict.html', prediction_text = 'Predicted Price of the house is: ${}'.format(output)) 
+    if output <= 0:
+        return render_template('do_predict.html', prediction_text = "The Predicted Value is 0%, may be the values entered are not reasonable")
+    elif output > 0:
+        return render_template('do_predict.html', prediction_text = 'The Predicted Value is: {}%'.format(output)) 
