@@ -1,22 +1,24 @@
 # This file will handle CRUD operations
 
 import numpy as np
-from . import db
-from .models import User
+from sqlalchemy import false
+from . import MODELS_FOLDER, db
+from .models import User, Saccos
 from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request
 from flask_login import current_user, login_required
 from joblib import dump, load
+from .generate_model import OUTCOME_NAMES
 
 # A Blueprint is way to organize contents of your file
 
 main = Blueprint("main", __name__)
 
-model = load('prediction-models/y1_model.joblib')
 
 @main.route('/')
 def index():
-    return render_template('index.html')
+    list_of_saccos = Saccos.query.all()
+    return render_template('index.html', list_of_saccos=list_of_saccos)
 
 
 @main.route('/profile')
@@ -51,7 +53,8 @@ def user_workouts():
 
     # workouts = user.workouts --the same
     # workouts = Workout.query.filter_by(author=user).order_by(Workout.date_posted.desc())
-    workouts = Workout.query.filter_by(author=user).paginate(page=page, per_page=2)
+    workouts = Workout.query.filter_by(
+        author=user).paginate(page=page, per_page=2)
 
     return render_template('all_workouts.html', workouts=workouts, user=user)
 
@@ -80,29 +83,124 @@ def delete_workout(workout_id):
     return redirect(url_for('main.user_workouts'))
 
 
+@main.route('/add-saccos', methods=['POST'])
+def add_saccos():
+    '''
+    This function adds a saccos into a database.
+    '''
+    saccoss = request.form.get('saccoss')
+
+    exists = Saccos.query.filter_by(name=saccoss).first()
+
+    if exists:
+        flash('Already exists')
+        return redirect(url_for('main.index'))
+
+    new_saccos = Saccos(name=saccoss)
+    db.session.add(new_saccos)
+    db.session.commit()
+    flash('Your request has been received successfuly!')
+
+    return redirect(url_for('main.index'))
+
+
+@main.route("/saccos/<int:saccos_id>/delete", methods=['GET', 'POST'])
+def delete_saccos(saccos_id):
+    saccos = Saccos.query.get_or_404(saccos_id)
+    db.session.delete(saccos)
+    db.session.commit()
+    flash('Your post has been deleted!')
+    return redirect(url_for('main.index'))
+
+
+@main.route("/saccos/<int:saccos_id>", methods=['GET'])
+def view_saccos(saccos_id):
+    saccos = Saccos.query.get_or_404(saccos_id)
+    return render_template('view_saccos.html', saccos=saccos)
+
+
+def get_model(saccos_id: int, performance: int):
+    '''
+    This function manages a retrieval of model files.
+    '''
+    saccos_data = Saccos.query.get_or_404(saccos_id)
+    sub_path = OUTCOME_NAMES.get(performance)
+    base_path = MODELS_FOLDER+"/"+saccos_data.name+"/"+sub_path+'.joblib'
+   
+    with open(base_path, 'rb') as file:
+            joblib_model = load(file)
+    return joblib_model
+    
+
+
+    if performance == 1:
+        # Capital adequacy
+        with open(base_path, 'rb') as file:
+            joblib_model = load(file)
+        return joblib_model
+    elif performance == 2:
+        # Asset quality 01
+        return False
+    elif performance == 3:
+        # Asset quality 02
+        return False
+    elif performance == 4:
+        # Asset quality 03
+        return False
+    elif performance == 5:
+        # Asset quality 04
+        return False
+    else:
+        return False
+
+
 @main.route('/predict')
-@login_required
+# @login_required
 def do_predict():
-    return render_template('do_predict.html')
+    list_of_saccos = Saccos.query.all()
+    return render_template('do_predict.html', list_of_saccos=list_of_saccos)
 
 
-@main.route('/predict', methods = ['POST'])
-@login_required
+@main.route('/predict', methods=['POST'])
+# @login_required
 def do_predict_post():
-    
-    #obtain all form values and place them in an array, convert into integers
+    list_of_saccos = Saccos.query.all()
+
+    # obtain all form values and place them in an array, convert into integers
     int_features = [float(x) for x in request.form.values()]
-    #Combine them all into a final numpy array
+
+    # obtain the saccos ID and performance metric
+    saccos_id = int_features[0]
+    performance_metric = int_features[1]
+
+    # remove the [saccos ID and performance metric] and combine the remaining into a final numpy array
+    del int_features[0]
+    del int_features[1]
     final_features = [np.array(int_features)]
-    #predict the price given the values inputted by user
-    prediction = model.predict(final_features)
-    
-    #Round the output to 2 decimal places
-    output = round(prediction[0], 2)
-    
-    #If the output is negative, the values entered are unreasonable to the context of the application
-    #If the output is greater than 0, return prediction
-    if output <= 0:
-        return render_template('do_predict.html', prediction_text = "The Predicted Value is 0%, may be the values entered are not reasonable")
-    elif output > 0:
-        return render_template('do_predict.html', prediction_text = 'The Predicted Value is: {}%'.format(output)) 
+
+    model = get_model(saccos_id, performance_metric)
+
+    if(model == False):
+        return render_template(
+            'do_predict.html',
+            prediction_text="The selection has yet implementated")
+
+    else:
+        # predict the price given the values inputted by user
+        prediction = model.predict(final_features)
+
+        # Round the output to 2 decimal places
+        output = round(prediction[0], 2)
+
+        # If the output is negative, the values entered are unreasonable to the context of the application
+        # If the output is greater than 0, return prediction
+        if output <= 0:
+            return render_template(
+                'do_predict.html',
+                prediction_text="The Predicted Value is 0%, may be the values entered are not reasonable",
+                list_of_saccos=list_of_saccos)
+        else:
+            return render_template(
+                'do_predict.html',
+                prediction_text='The Predicted Value is: {}%'.format(output),
+                list_of_saccos=list_of_saccos)

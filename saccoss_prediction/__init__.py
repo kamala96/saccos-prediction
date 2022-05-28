@@ -1,8 +1,12 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
+migrate = Migrate()
+UPLOAD_FOLDER = 'datasets'
+MODELS_FOLDER = 'prediction-models'
 
 # This is the first file that get called when a project is runned
 # Very useful when you want to set-up features only once
@@ -12,8 +16,11 @@ def create_app():
 
     app.config['SECRET_KEY'] = 'secret-key-goes-here'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['MODELS_FOLDER'] = MODELS_FOLDER
 
     db.init_app(app)
+    migrate.init_app(app, db)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -31,5 +38,8 @@ def create_app():
 
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
+
+    from .generate_model import generate_model as generate_model_blueprint
+    app.register_blueprint(generate_model_blueprint)
 
     return app

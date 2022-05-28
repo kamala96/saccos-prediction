@@ -17,3 +17,23 @@ class Workout(db.Model):
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     comment = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+class Saccos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(1000))
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    prediction_models = db.relationship('PredictionModels', backref='author', lazy=True)
+
+
+class PredictionModels(db.Model):
+    # __tablename__ = 'models'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(1000))
+    performance_criteria = db.Column(db.String(1000))
+    model_used = db.Column(db.String(1000))
+    model_accuracy = db.Column(db.Float)
+    mean_squared_error = db.Column(db.Float)
+    selected = db.Column(db.Boolean, default=False)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    saccoss_id = db.Column(db.Integer, db.ForeignKey('saccos.id'), nullable=False)

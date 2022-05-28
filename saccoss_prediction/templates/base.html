@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename= 'beauty.css') }}" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
     integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+<link rel="stylesheet" href="{{ url_for('static', filename= 'dataTables.bootstrap4.css') }}" />
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
@@ -25,6 +26,9 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
     integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
   </script>
+  <script src="{{ url_for('static', filename= 'dataTables.min.js') }}"></script>
+  <script src="{{ url_for('static', filename= 'dataTables.bootstrap4.min.js') }}"></script>
+  <script src="{{ url_for('static', filename= 'datatables-demo.js') }}"></script>
   {% endblock %}
 </head>
 
@@ -43,6 +47,11 @@
       <li class="nav-item active">
         <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary" role="button"
           aria-pressed="true">Home</a>
+      </li>
+
+      <li class="nav-item">
+        <a href="{{ url_for('generate_model.generate') }}" class="btn btn-outline-secondary mx-sm-1" role="button">Generate
+          Models</a>
       </li>
 
       <li class="nav-item">

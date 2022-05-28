@@ -2,16 +2,113 @@
 <link rel="stylesheet" href="{{ url_for('static', filename= 'extended_beauty.css') }}" />
 {% endblock %} {% block content %}
 
-<h1>Hello</h1>
-<center>
-    <img src="{{ url_for('static', filename= 'images/pushup.png') }}" alt="push-ups boi" height="200px" />
-</center>
-<p>
-    Welcome to your pushups-logger! <br />This web app is a minimal clone of
-    <a href="http://www.pushupslogger.com">http://www.pushupslogger.com</a> to
-    implement basic CRUD and User Authentication functionality using Flask. You
-    can add your push-ups workout here, track and visualise(<i>update coming soon</i>) them.
-</p>
+<!---Containerize main page for styling--->
+<div class="page">
+    <!---Containerize paragraph and form for styling--->
+    <div class="container">
+
+        <div class="alert alert-success" role="alert">
+            <h4>SACCOS Performance</h4>
+        </div>
+
+        {% with messages = get_flashed_messages() %} {% if messages %}
+        <div class="notification text-danger">
+            {{ messages[0] }}
+        </div>
+        {% endif %} {% endwith %}
+
+        <!-- Form Start -->
+        <div class="collapse mb-2" id="addSaccossCollapse">
+            <div class="card">
+                <div class="card-header container-fluid">
+                    Add New SACCOS
+                </div>
+                <div class="card-body">
+
+                    <form action="{{url_for('main.add_saccos')}}" method="post" enctype=multipart/form-data> <div
+                        class="input-group mb-3">
+                        <span class="input-group-text">Name</span>
+                        <input type="text" aria-label="Saccos Name" name="saccoss" class="form-control" required>
+                        <button class="btn btn-primary" type="submit">Submit</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Form End -->
+
+    <!-- List Start -->
+    <div class="card mb-2">
+        <div class="card-header container-fluid">
+            <div class="row">
+                <div class="col-md-10">
+                    <!-- <h6 style="text-transform:uppercase;">STORES</h6> -->
+                </div>
+                <div class="col-md-2 float-right">
+                    <button class="btn btn-sm btn-primary float-right" data-toggle="collapse"
+                        data-target="#addSaccossCollapse">
+                        <span data-feather="plus-circle"></span> Add New
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- <?php if(! empty($intermediaries)): ?> -->
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date Created</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date Created</th>
+                            <th>Action</th>
+                        </tr>
+                    </tfoot>
+                    <tbody>
+                        {% for saccoss in list_of_saccos %}
+                        <tr>
+                            <td> {{ saccoss.name }} </td>
+                            <td>{{ saccoss.date_created.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('main.view_saccos', saccos_id=saccoss.id) }}"
+                                    class="btn btn-outline-primary btn-sm" role="button">View
+                                </a>
+                                <a href="{{ url_for('main.delete_saccos', saccos_id=saccoss.id) }}"
+                                    class="btn btn-outline-danger btn-sm" role="button">Trash
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- List end -->
+
+
+    <!-- {% if texts is defined %}
+        {% for text in texts %}
+        <div>{{ error }}</div>
+        <div class="post">
+            <div class="post-title">{{ text.subject }}</div>
+            <pre class="post-content">{{ text.content }}</pre>
+        </div>
+        {% endfor %}
+        {% else %}
+        Error!
+        {% endif %} -->
+
+
+</div>
+</div>
+<!-- </center> -->
 
 
 {% endblock %}

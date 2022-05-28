@@ -1,0 +1,460 @@
+import numbers
+import os
+import pathlib
+from flask import Blueprint, flash, render_template, url_for, request, redirect
+from joblib import dump
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.model_selection import KFold, train_test_split
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, login_required
+from .models import Saccos, User, PredictionModels
+from . import MODELS_FOLDER, UPLOAD_FOLDER, db
+
+import numpy as np
+import pandas as pd
+
+generate_model = Blueprint('generate_model', __name__)
+
+ALLOWED_EXTENSIONS = {'csv'}
+
+OUTCOME_NAMES = dict(
+    {
+        1: 'capital-adequacy',
+        2: 'asset-quality-01',
+        3: 'asset-quality-02',
+        4: 'asset-quality-03',
+        5: 'asset-quality-04'
+    })
+
+RENAME_COLUMN = {
+    'Date': 'Month', 'CC': 'Core capital', 'TA': 'Total assets', 'NPL': 'Non-performing loans',
+    'GLP-TL': 'Gross Loan Portifolio/Total loans', 'NEA': 'Non-earning assets',
+    'GLLR': 'General loan loss reserve', 'GL': 'Gross loans', 'WO': 'Write-offs', 'RCV': 'Recoveries'
+}
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def renamed_file_name(saccos_name):
+    new_name = saccos_name+".csv"
+    return new_name.lower()
+
+
+def read_data(file_name, saccos_id):
+    file_data = pd.read_csv(UPLOAD_FOLDER + "/" + saccos_id + "/" + file_name)
+    return file_data
+
+
+def handle_plain_negatives(row):
+    if row < 0:
+        # whatever  you logic
+        return 0
+    else:
+        return row
+
+
+def handle_percentage_negatives(row):
+    if isinstance(row, numbers.Number):
+        if row < 0:
+            # whatever  you logic
+            return 0
+        else:
+            return row * 100
+    return 0
+
+
+def handle_division_by_zero(n, d):
+    # return n / d if d else 0
+    try:
+        result = (n/d)
+        return result
+    except (ZeroDivisionError, ValueError):
+        return 0
+
+
+def pre_processing(data):
+    pd.set_option('display.float_format',  '{:,.2f}'.format)
+    data[[
+        RENAME_COLUMN["CC"], RENAME_COLUMN["TA"], RENAME_COLUMN["NPL"], RENAME_COLUMN["GLP-TL"],
+        RENAME_COLUMN["GLLR"], RENAME_COLUMN["NEA"], RENAME_COLUMN["GL"], RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"]
+    ]] = data[[
+        RENAME_COLUMN["CC"], RENAME_COLUMN["TA"], RENAME_COLUMN["NPL"], RENAME_COLUMN["GLP-TL"],
+        RENAME_COLUMN["GLLR"], RENAME_COLUMN["NEA"], RENAME_COLUMN["GL"], RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"]
+    ]].apply(pd.to_numeric)
+    # data[["CC", "TA", "NPL", "GLP-TL", "GLLR", "GL", "WO", "RCV"]] = data[["CC", "TA", "NPL", "GLP-TL", "GLLR", "GL", "WO", "RCV"]].apply(pd.to_numeric)
+    data[RENAME_COLUMN["Date"]] = pd.to_datetime(
+        data[RENAME_COLUMN["Date"]], format='%Y/%m/%d')
+    data = data.drop('xxxx', axis=1)
+    data = data.set_index(RENAME_COLUMN["Date"])
+    return data
+
+
+def further_preprocessing(data):
+    # data['y1'] = data.apply(lambda row: row.CC / row.TA, axis = 1)
+
+    # Capital adequacy
+    data[OUTCOME_NAMES.get(1)] = handle_division_by_zero(
+        data[RENAME_COLUMN["CC"]], data[RENAME_COLUMN["TA"]])
+    # data.loc[data['y1'] <= 0, 'y1'] = 0
+    # data.loc[data['y1'] > 0, 'y1'] = data['y1'] * 100
+
+    # Asset quality 1
+    data[OUTCOME_NAMES.get(2)] = handle_division_by_zero(
+        data[RENAME_COLUMN["NPL"]], data[RENAME_COLUMN["GLP-TL"]])
+
+    # Asset quality 2
+    data[OUTCOME_NAMES.get(3)] = handle_division_by_zero(
+        data[RENAME_COLUMN["NEA"]], data[RENAME_COLUMN["TA"]])
+
+    # Asset quality 3
+    data[OUTCOME_NAMES.get(4)] = handle_division_by_zero(
+        data[RENAME_COLUMN["GLLR"]], data[RENAME_COLUMN["GL"]])
+
+    # Asset quality 4
+    data[OUTCOME_NAMES.get(5)] = handle_division_by_zero(
+        (data[RENAME_COLUMN["WO"]] - data[RENAME_COLUMN["RCV"]]), data[RENAME_COLUMN["TA"]])
+
+    data = data.asfreq('M')
+    data = data.sort_index()
+
+    # handling negative values
+    data[RENAME_COLUMN["CC"]] = data[RENAME_COLUMN["CC"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["TA"]] = data[RENAME_COLUMN["TA"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["NPL"]] = data[RENAME_COLUMN["NPL"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["GLP-TL"]] = data[RENAME_COLUMN["GLP-TL"]
+                                         ].apply(handle_plain_negatives)
+    data[RENAME_COLUMN["GLLR"]] = data[RENAME_COLUMN["GLLR"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["NEA"]] = data[RENAME_COLUMN["NEA"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["GL"]] = data[RENAME_COLUMN["GL"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["WO"]] = data[RENAME_COLUMN["WO"]].apply(
+        handle_plain_negatives)
+    data[RENAME_COLUMN["RCV"]] = data[RENAME_COLUMN["RCV"]].apply(
+        handle_plain_negatives)
+
+    data[OUTCOME_NAMES.get(1)] = data[OUTCOME_NAMES.get(
+        1)].apply(handle_percentage_negatives)
+    data[OUTCOME_NAMES.get(2)] = data[OUTCOME_NAMES.get(
+        2)].apply(handle_percentage_negatives)
+    data[OUTCOME_NAMES.get(3)] = data[OUTCOME_NAMES.get(
+        3)].apply(handle_percentage_negatives)
+    data[OUTCOME_NAMES.get(4)] = data[OUTCOME_NAMES.get(
+        4)].apply(handle_percentage_negatives)
+    data[OUTCOME_NAMES.get(5)] = data[OUTCOME_NAMES.get(
+        5)].apply(handle_percentage_negatives)
+
+    final = data.fillna(0)
+
+    return final
+
+
+def define_x_y(data, y_column):
+    if y_column == OUTCOME_NAMES.get(1):
+        #         x = data_df.drop(['PE'], axis=1).values
+        x = data[[RENAME_COLUMN["CC"], RENAME_COLUMN["TA"]]].values
+        y = data[y_column]
+        return x, y
+    elif y_column == OUTCOME_NAMES.get(2):
+        x = data[[RENAME_COLUMN["NPL"], RENAME_COLUMN["GLP-TL"]]].values
+        y = data[y_column]
+        return x, y
+    elif y_column == OUTCOME_NAMES.get(3):
+        x = data[[RENAME_COLUMN["NEA"], RENAME_COLUMN["TA"]]].values
+        y = data[y_column]
+        return x, y
+    elif y_column == OUTCOME_NAMES.get(4):
+        x = data[[RENAME_COLUMN["GLLR"], RENAME_COLUMN["GL"]]].values
+        y = data[y_column]
+        return x, y
+    elif y_column == OUTCOME_NAMES.get(5):
+        x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"]]].values
+        y = data[y_column]
+        return x, y
+    else:
+        return False
+
+
+def get_score(model, X_train, X_test, y_train, y_test):
+    model.fit(X_train, y_train)
+    return model.score(X_test, y_test)
+
+
+def save_model(model, path):
+    path = path+'.joblib'
+    dump(model, path)
+
+
+def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
+    models = [LinearRegression(), RandomForestRegressor(),
+              KNeighborsRegressor(), DecisionTreeRegressor()]
+    test_errors = {
+        'LinearRegression()': 0,
+        'RandomForestRegressor()': 0,
+        'KNeighborsRegressor()': 0,
+        'DecisionTreeRegressor()': 0,
+    }
+    r2_scores = {
+        'LinearRegression()': 0,
+        'RandomForestRegressor()': 0,
+        'KNeighborsRegressor()': 0,
+        'DecisionTreeRegressor()': 0,
+    }
+    selected = {
+        'LinearRegression()': False,
+        'RandomForestRegressor()': False,
+        'KNeighborsRegressor()': False,
+        'DecisionTreeRegressor()': False,
+    }
+    best_model_name = 0
+    best_model_value = 0
+
+    for model in models:
+        model.fit(X_train, Y_train)
+        predictions = model.predict(X_test)
+        test_errors[type(model).__name__ +
+                    "()"] = round(mean_absolute_error(Y_test, predictions), 5)
+        r2_scores[type(model).__name__ +
+                  "()"] = round(r2_score(Y_test, predictions), 5)
+
+    best_model_name = min(test_errors, key=test_errors.get)
+    best_model_value = test_errors.get(best_model_name)
+
+    pathlib.Path(MODELS_FOLDER, saccos).mkdir(exist_ok=True)
+    model_path = MODELS_FOLDER+"/"+saccos+"/"+criteria+'.joblib'
+
+    # fitting the right model
+    final_model = ''
+    if best_model_name.startswith("L"):
+        final_model = LinearRegression()
+        selected[best_model_name] = True
+    elif best_model_name.startswith("R"):
+        final_model = RandomForestRegressor()
+        selected[best_model_name] = True
+    elif best_model_name.startswith("K"):
+        final_model = KNeighborsRegressor()
+        selected[best_model_name] = True
+    elif best_model_name.startswith("D"):
+        final_model = DecisionTreeRegressor()
+        selected[best_model_name] = True
+    else:
+        final_model = final_model
+
+    final_model = final_model.fit(X_train, Y_train)
+    prediction = final_model.predict(X_test)
+    error = mean_absolute_error(Y_test, prediction)
+    dump(final_model, model_path)
+
+    data_rows = []
+    for model2 in models:
+        row = PredictionModels(
+            title= type(model2).__name__ + ' for '+criteria+' of '+saccos,
+            performance_criteria = criteria,
+            model_used = type(model2).__name__,
+            mean_squared_error = test_errors.get(type(model2).__name__+"()"),
+            model_accuracy = r2_scores.get(type(model2).__name__+"()"),
+            selected = selected.get(type(model2).__name__+"()"),
+            saccoss_id = saccos_id)
+        data_rows.append(row)
+    
+    db.session.add_all(data_rows)
+    db.session.commit()
+
+    # insert_model = PredictionModels(title='Generated Model 01', performance_criteria=OUTCOME_NAMES.get(
+    #     1), model_used='Linear Regression', model_accuracy=score_1, saccoss_id=full_saccos.id)
+
+   
+#    db.session.add(insert_model_5)
+#    db.session.commit()
+
+    # print("results:", test_errors)
+    # print("model_name:", best_model_name)
+    # print("model_error:", best_model_value)
+    # print("last_model_error:", error)
+    print("rows:", data_rows)
+    return True
+
+
+@generate_model.route('/generate', methods=['GET', 'POST'])
+def generate():
+    list_of_saccos = Saccos.query.all()
+    if request.method == 'POST':
+
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+
+        saccos_id = int(request.form.get('saccos-name'))
+        full_saccos = Saccos.query.get_or_404(saccos_id)
+
+        # outcome = int(request.form.get('outcome'))
+        file = request.files['file']
+
+        # If the user does not select a file.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            pathlib.Path(UPLOAD_FOLDER, full_saccos.name.lower()).mkdir(
+                exist_ok=True)
+            # some custom file name
+            file.filename = renamed_file_name(full_saccos.name)
+            # some custom file name
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(UPLOAD_FOLDER,
+                      full_saccos.name.lower(), filename))
+
+            data = read_data(filename, full_saccos.name.lower())
+            data = pre_processing(data)
+            data = further_preprocessing(data)
+            data.to_csv(UPLOAD_FOLDER+"/" +
+                        full_saccos.name.lower()+'/clean_'+filename, sep='\t')
+
+            x_y_splits_1 = define_x_y(data, OUTCOME_NAMES.get(1))
+            x_y_splits_2 = define_x_y(data, OUTCOME_NAMES.get(2))
+            x_y_splits_3 = define_x_y(data, OUTCOME_NAMES.get(3))
+            x_y_splits_4 = define_x_y(data, OUTCOME_NAMES.get(4))
+            x_y_splits_5 = define_x_y(data, OUTCOME_NAMES.get(5))
+
+            X_1 = x_y_splits_1[0]
+            y_1 = x_y_splits_1[1]
+            X_2 = x_y_splits_2[0]
+            y_2 = x_y_splits_2[1]
+            X_3 = x_y_splits_3[0]
+            y_3 = x_y_splits_3[1]
+            X_4 = x_y_splits_4[0]
+            y_4 = x_y_splits_4[1]
+            X_5 = x_y_splits_5[0]
+            y_5 = x_y_splits_5[1]
+
+            X_train_1, X_test_1, y_train_1, y_test_1 = train_test_split(
+                X_1, y_1, test_size=0.2, random_state=0)
+            X_train_2, X_test_2, y_train_2, y_test_2 = train_test_split(
+                X_2, y_2, test_size=0.2, random_state=0)
+            X_train_3, X_test_3, y_train_3, y_test_3 = train_test_split(
+                X_3, y_3, test_size=0.2, random_state=0)
+            X_train_4, X_test_4, y_train_4, y_test_4 = train_test_split(
+                X_4, y_4, test_size=0.2, random_state=0)
+            X_train_5, X_test_5, y_train_5, y_test_5 = train_test_split(
+                X_5, y_5, test_size=0.2, random_state=0)
+            
+
+            # Incase -- delete specific table
+            # try:
+            #     db.session.drop(PredictionModels)
+            # except:
+            #     pass
+            
+
+            # Incase -- delete all records
+            # try:
+            #     db.session.query(PredictionModels).delete()
+            #     db.session.commit()
+            # except:
+            #     pass
+
+            # Delete the records for a saccos -- then populate with new records
+            try:
+                db.session.query(PredictionModels).filter(PredictionModels.saccoss_id==saccos_id).delete()
+                db.session.commit()
+            except:
+                pass
+            
+            model_1_process = loop_models(X_train_1, X_test_1, y_train_1, y_test_1, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(1))
+            model_2_process = loop_models(X_train_2, X_test_2, y_train_2, y_test_2, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(2))
+            model_3_process = loop_models(X_train_3, X_test_3, y_train_3, y_test_3, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(3))
+            # # model_4_process = loop_models(X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(4))
+            model_5_process = loop_models(X_train_5, X_test_5, y_train_5, y_test_5, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(5))
+            
+
+            # ml_linear_1 = LinearRegression()
+            # ml_linear_1.fit(X_train_1, y_train_1)
+            # ml_linear_2 = LinearRegression()
+            # ml_linear_2.fit(X_train_2, y_train_2)
+            # ml_linear_3 = LinearRegression()
+            # ml_linear_3.fit(X_train_3, y_train_3)
+            # ml_linear_4 = LinearRegression()
+            # ml_linear_4.fit(X_train_4, y_train_4)
+            # ml_linear_5 = LinearRegression()
+            # ml_linear_5.fit(X_train_5, y_train_5)
+
+            # y_pred_1 = ml_linear_1.predict(X_test_1)
+            # y_pred_2 = ml_linear_2.predict(X_test_2)
+            # y_pred_3 = ml_linear_3.predict(X_test_3)
+            # y_pred_4 = ml_linear_4.predict(X_test_4)
+            # y_pred_5 = ml_linear_5.predict(X_test_5)
+
+            # score_1 = round(r2_score(y_test_1, y_pred_1) * 100, 2)
+            # score_2 = round(r2_score(y_test_2, y_pred_2) * 100, 2)
+            # score_3 = round(r2_score(y_test_3, y_pred_3) * 100, 2)
+            # score_4 = round(r2_score(y_test_4, y_pred_4) * 100, 2)
+            # score_5 = round(r2_score(y_test_5, y_pred_5) * 100, 2)
+
+            # pathlib.Path(MODELS_FOLDER, full_saccos.name.lower()).mkdir(
+            #     exist_ok=True)
+
+            # model_path_1 = MODELS_FOLDER+"/" + \
+            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(1)+'.joblib'
+            # model_path_2 = MODELS_FOLDER+"/" + \
+            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(2)+'.joblib'
+            # model_path_3 = MODELS_FOLDER+"/" + \
+            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(3)+'.joblib'
+            # model_path_4 = MODELS_FOLDER+"/" + \
+            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(4)+'.joblib'
+            # model_path_5 = MODELS_FOLDER+"/" + \
+            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(5)+'.joblib'
+
+            # saving model into a file
+            # dump(ml_linear_1, model_path_1)
+            # dump(ml_linear_2, model_path_2)
+            # dump(ml_linear_3, model_path_3)
+            # dump(ml_linear_4, model_path_4)
+            # dump(ml_linear_5, model_path_5)
+
+            # data
+            # pd.DataFrame(model.coef_, x.columns, columns = ['Coeff'])
+
+            # Evaluation
+            # Mean absolute error
+            # Mean squared error
+            # Root mean squared error
+
+            # Saving info into the database
+            # PredictionModels.query.delete()
+            # insert_model_1 = PredictionModels(title='Generated Model 01', performance_criteria=OUTCOME_NAMES.get(
+            #     1), model_used='Linear Regression', model_accuracy=score_1, saccoss_id=full_saccos.id)
+            # insert_model_2 = PredictionModels(title='Generated Model 02', performance_criteria=OUTCOME_NAMES.get(
+            #     2), model_used='Linear Regression', model_accuracy=score_2, saccoss_id=full_saccos.id)
+            # insert_model_3 = PredictionModels(title='Generated Model 03', performance_criteria=OUTCOME_NAMES.get(
+            #     3), model_used='Linear Regression', model_accuracy=score_3, saccoss_id=full_saccos.id)
+            # insert_model_4 = PredictionModels(title='Generated Model 04', performance_criteria=OUTCOME_NAMES.get(
+            #     4), model_used='Linear Regression', model_accuracy=score_4, saccoss_id=full_saccos.id)
+            # insert_model_5 = PredictionModels(title='Generated Model 05', performance_criteria=OUTCOME_NAMES.get(
+            #     5), model_used='Linear Regression', model_accuracy=score_5, saccoss_id=full_saccos.id)
+
+            # db.session.add(insert_model_1)
+            # db.session.add(insert_model_2)
+            # db.session.add(insert_model_3)
+            # db.session.add(insert_model_4)
+            # db.session.add(insert_model_5)
+            # db.session.commit()
+
+            # cross_val_score(LinearRegression(), X, y)
+            flash('Success! --- The models has been generated for '+full_saccos.name, category="info")
+            # return str(score_1)
+            return redirect(url_for('generate_model.generate'))
+    return render_template('generate_models.html', list_of_saccos=list_of_saccos)

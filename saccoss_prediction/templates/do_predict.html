@@ -37,6 +37,22 @@
                 <form action="{{url_for('main.do_predict_post')}}" method="post">
 
                     <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
+                        <select id="saccos-name" name="saccos-id" class="form-control" id="basic-url"
+                            aria-describedby="basic-addon3" required="required">
+                            <option selected disabled>Open this select menu</option>
+                            {% for saccoss in list_of_saccos %}
+                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <input type="number" id="core-capital" name="measure" class="form-control" value="1"
+                            style="display: none;">
+                    </div>
+
+                    <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon3">Core Capital</span>
                         <input type="number" id="core-capital" name="core-capital" class="form-control" id="basic-url"
                             aria-describedby="basic-addon3" required="required">
@@ -57,8 +73,6 @@
             </div>
         </div>
         <!-- Tabs content -->
-
-
 
         <br>
 
