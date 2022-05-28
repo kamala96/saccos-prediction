@@ -126,12 +126,10 @@ def get_model(saccos_id: int, performance: int):
     saccos_data = Saccos.query.get_or_404(saccos_id)
     sub_path = OUTCOME_NAMES.get(performance)
     base_path = MODELS_FOLDER+"/"+saccos_data.name+"/"+sub_path+'.joblib'
-   
-    with open(base_path, 'rb') as file:
-            joblib_model = load(file)
-    return joblib_model
-    
 
+    with open(base_path, 'rb') as file:
+        joblib_model = load(file)
+    return joblib_model
 
     if performance == 1:
         # Capital adequacy
@@ -158,7 +156,7 @@ def get_model(saccos_id: int, performance: int):
 # @login_required
 def do_predict():
     list_of_saccos = Saccos.query.all()
-    return render_template('do_predict.html', list_of_saccos=list_of_saccos)
+    return render_template('do_predict.html', list_of_saccos=list_of_saccos, criteria=OUTCOME_NAMES)
 
 
 @main.route('/predict', methods=['POST'])
@@ -179,12 +177,10 @@ def do_predict_post():
     final_features = [np.array(int_features)]
 
     model = get_model(saccos_id, performance_metric)
+    prediction_text = ""
 
     if(model == False):
-        return render_template(
-            'do_predict.html',
-            prediction_text="The selection has yet implementated")
-
+        prediction_text = "The selection has yet implementated"
     else:
         # predict the price given the values inputted by user
         prediction = model.predict(final_features)
@@ -195,12 +191,11 @@ def do_predict_post():
         # If the output is negative, the values entered are unreasonable to the context of the application
         # If the output is greater than 0, return prediction
         if output <= 0:
-            return render_template(
-                'do_predict.html',
-                prediction_text="The Predicted Value is 0%, may be the values entered are not reasonable",
-                list_of_saccos=list_of_saccos)
+            prediction_text = 'The Predicted Value is 0%, may be the values entered are not reasonable'
         else:
-            return render_template(
-                'do_predict.html',
-                prediction_text='The Predicted Value is: {}%'.format(output),
-                list_of_saccos=list_of_saccos)
+            prediction_text = 'The Predicted Value is: {}%'.format(output)
+
+        return render_template(
+            'do_predict.html',
+            prediction_text=prediction_text,
+            list_of_saccos=list_of_saccos, criteria=OUTCOME_NAMES)
