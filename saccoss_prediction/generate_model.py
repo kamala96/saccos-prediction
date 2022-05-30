@@ -37,7 +37,6 @@ RENAME_COLUMN = {
     'GLLR': 'General loan loss reserve', 'GL': 'Gross loans', 'WO': 'Write-offs', 'RCV': 'Recoveries'
 }
 
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -180,7 +179,7 @@ def define_x_y(data, y_column):
         y = data[y_column]
         return x, y
     elif y_column == OUTCOME_NAMES.get(5):
-        x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"]]].values
+        x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"], RENAME_COLUMN["TA"]]].values
         y = data[y_column]
         return x, y
     else:
@@ -377,7 +376,7 @@ def generate():
             model_1_process = loop_models(X_train_1, X_test_1, y_train_1, y_test_1, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(1))
             model_2_process = loop_models(X_train_2, X_test_2, y_train_2, y_test_2, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(2))
             model_3_process = loop_models(X_train_3, X_test_3, y_train_3, y_test_3, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(3))
-            # # model_4_process = loop_models(X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(4))
+            model_4_process = loop_models(X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(4))
             model_5_process = loop_models(X_train_5, X_test_5, y_train_5, y_test_5, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(5))
             
 

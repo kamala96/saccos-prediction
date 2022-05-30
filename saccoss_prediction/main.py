@@ -125,31 +125,38 @@ def get_model(saccos_id: int, performance: int):
     '''
     saccos_data = Saccos.query.get_or_404(saccos_id)
     sub_path = OUTCOME_NAMES.get(performance)
-    base_path = MODELS_FOLDER+"/"+saccos_data.name+"/"+sub_path+'.joblib'
+    base_path = MODELS_FOLDER+"/"+saccos_data.name.lower()+"/"+sub_path+'.joblib'
 
-    with open(base_path, 'rb') as file:
-        joblib_model = load(file)
-    return joblib_model
+    # with open(base_path, 'rb') as file:
+    #         joblib_model = load(file)
+    # return joblib_model
 
-    if performance == 1:
-        # Capital adequacy
+    try:
         with open(base_path, 'rb') as file:
             joblib_model = load(file)
         return joblib_model
-    elif performance == 2:
-        # Asset quality 01
+    except:
         return False
-    elif performance == 3:
-        # Asset quality 02
-        return False
-    elif performance == 4:
-        # Asset quality 03
-        return False
-    elif performance == 5:
-        # Asset quality 04
-        return False
-    else:
-        return False
+
+    # if performance == 1:
+    #     # Capital adequacy
+    #     with open(base_path, 'rb') as file:
+    #         joblib_model = load(file)
+    #     return joblib_model
+    # elif performance == 2:
+    #     # Asset quality 01
+    #     return False
+    # elif performance == 3:
+    #     # Asset quality 02
+    #     return False
+    # elif performance == 4:
+    #     # Asset quality 03
+    #     return False
+    # elif performance == 5:
+    #     # Asset quality 04
+    #     return False
+    # else:
+    #     return False
 
 
 @main.route('/predict')
@@ -180,7 +187,7 @@ def do_predict_post():
     prediction_text = ""
 
     if(model == False):
-        prediction_text = "The selection has yet implementated"
+        prediction_text = "The selection has not yet implemented"
     else:
         # predict the price given the values inputted by user
         prediction = model.predict(final_features)
@@ -191,11 +198,12 @@ def do_predict_post():
         # If the output is negative, the values entered are unreasonable to the context of the application
         # If the output is greater than 0, return prediction
         if output <= 0:
-            prediction_text = 'The Predicted Value is 0%, may be the values entered are not reasonable'
+            prediction_text = 'The Predicted Value of {} is 0%, may be the values entered are not reasonable'.format(
+                OUTCOME_NAMES.get(performance_metric))
         else:
             prediction_text = 'The Predicted Value is: {}%'.format(output)
 
-        return render_template(
-            'do_predict.html',
-            prediction_text=prediction_text,
-            list_of_saccos=list_of_saccos, criteria=OUTCOME_NAMES)
+    return render_template(
+        'do_predict.html',
+        prediction_text=prediction_text,
+        list_of_saccos=list_of_saccos, criteria=OUTCOME_NAMES)
