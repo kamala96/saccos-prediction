@@ -37,10 +37,19 @@
             <div class="tab-pane fade" id="ex1-tabs-2" role="tabpanel" aria-labelledby="ex1-tab-2">
                 <div class="card mb-2">
                     <div class="card-body">
+                        <div class="intro">
+                            <b>
+                                <p class="Note">
+                                    <b>Note: The row with the dark background is the best choice used to generate the
+                                        prediction model
+                                    </b>
+                                </p>
+                            </b>
+                        </div>
                         <ul class="list-group">
                             {% for key, value in outcomes.items() %}
                             <li
-                                class="list-group-item list-group-item-action list-group-item-light d-flex justify-content-between align-items-center mb-1">
+                                class="list-group-item list-group-item-action list-group-item-success d-flex justify-content-between align-items-center mb-1">
                                 <a data-toggle="collapse" class="text-info" href="javascript:void(0)">
                                     <span data-feather="folder"></span>{{ value }}
                                 </a>
@@ -49,7 +58,6 @@
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th scope="col">#</th>
                                             <th scope="col">Model</th>
                                             <th scope="col">Accuracy</th>
                                             <th scope="col">MSE</th>
@@ -59,12 +67,11 @@
                                     <tbody>
                                         {% for s in saccos.prediction_models %}
                                         {% if s.performance_criteria == value %}
-                                        <tr>
-                                            <th scope="row">1</th>
+                                        <tr class="{{ 'table-active' if s.selected else '' }}">
                                             <td>{{ s.model_used }}</td>
                                             <td>{{ s.model_accuracy }}</td>
                                             <td>{{ s.mean_squared_error }}</td>
-                                            <td>{{ s.date_created }}</td>
+                                            <td>{{ s.date_created.strftime('%Y-%m-%d') }}</td>
                                         </tr>
                                         {% endif %}
                                         {% endfor %}

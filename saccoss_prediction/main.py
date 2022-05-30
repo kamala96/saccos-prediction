@@ -55,7 +55,6 @@ def user_workouts():
     # workouts = Workout.query.filter_by(author=user).order_by(Workout.date_posted.desc())
     workouts = Workout.query.filter_by(
         author=user).paginate(page=page, per_page=2)
-
     return render_template('all_workouts.html', workouts=workouts, user=user)
 
 
@@ -69,7 +68,6 @@ def update_workout(workout_id):
         db.session.commit()
         flash('Your post has been updated!')
         return redirect(url_for('main.user_workouts'))
-
     return render_template('update_workout.html', workout=workout)
 
 
@@ -118,7 +116,7 @@ def view_saccos(saccos_id):
     # saccos = Saccos.query.get_or_404(saccos_id)
     saccos = Saccos.query.filter_by(id=saccos_id).first_or_404()
     model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
-    print(model_summary)
+    # print(model_summary)
     return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES)
 
 
