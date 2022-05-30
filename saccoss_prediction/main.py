@@ -2,13 +2,15 @@
 
 import numpy as np
 from sqlalchemy import false
-from . import MODELS_FOLDER, db
+from . import MODELS_FOLDER, UPLOAD_FOLDER, db
 from .models import PredictionModels, User, Saccos
 from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request
 from flask_login import current_user, login_required
 from joblib import dump, load
 from .generate_model import OUTCOME_NAMES
+import pandas as pd
+from IPython.display import HTML
 
 # A Blueprint is way to organize contents of your file
 
@@ -115,9 +117,13 @@ def delete_saccos(saccos_id):
 def view_saccos(saccos_id):
     # saccos = Saccos.query.get_or_404(saccos_id)
     saccos = Saccos.query.filter_by(id=saccos_id).first_or_404()
-    model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
-    # print(model_summary)
-    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES)
+    filename = saccos.name.lower()
+    filename = filename.replace(" ", "_")
+    filename = filename+'.csv'
+    clean_sample = pd.read_csv(UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
+    # model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
+    # print(clean_sample.to_html())
+    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES, data=clean_sample)
 
 
 def get_model(saccos_id: int, performance: int):
