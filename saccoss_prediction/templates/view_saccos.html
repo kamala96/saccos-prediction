@@ -31,7 +31,7 @@
                 <div class="card mb-2">
                     <div class="card-body">
                         <div class="table-responsive">
-                        {{ data.to_html(classes='table table-bordered table-sm', table_id="dataTable",) | safe}}
+                            {{ data.to_html(classes='table table-bordered table-sm', table_id="dataTable", float_format='{:10.2f}'.format, index=False, ) | safe }}
                         </div>
                     </div>
                 </div>
