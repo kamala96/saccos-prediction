@@ -59,8 +59,8 @@
                                     <thead>
                                         <tr>
                                             <th scope="col">Model</th>
-                                            <th scope="col">Accuracy</th>
-                                            <th scope="col">MSE</th>
+                                            <th scope="col">Prediction Accuracy</th>
+                                            <th scope="col">Mean Squared Error</th>
                                             <th scope="col">Date Generated</th>
                                         </tr>
                                     </thead>
@@ -71,7 +71,7 @@
                                             <td>{{ s.model_used }}</td>
                                             <td>{{ s.model_accuracy }}</td>
                                             <td>{{ s.mean_squared_error }}</td>
-                                            <td>{{ s.date_created.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ s.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}</td>
                                         </tr>
                                         {% endif %}
                                         {% endfor %}
