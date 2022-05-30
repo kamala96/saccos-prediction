@@ -57,8 +57,41 @@
                                     <span data-feather="folder"></span>{{ value }}
                                 </a>
                             </li>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered table-sm" id="dataTable{{key}}" width="100%"
+                                    cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Model</th>
+                                            <th scope="col">Prediction Accuracy</th>
+                                            <th scope="col">Mean Squared Error</th>
+                                            <th scope="col">Date Generated</th>
+                                        </tr>
+                                    </thead>
+                                    <tfoot>
+                                        <tr>
+                                            <th scope="col">Model</th>
+                                            <th scope="col">Prediction Accuracy</th>
+                                            <th scope="col">Mean Squared Error</th>
+                                            <th scope="col">Date Generated</th>
+                                        </tr>
+                                    </tfoot>
+                                    <tbody>
+                                        {% for s in saccos.prediction_models %}
+                                        {% if s.performance_criteria == value %}
+                                        <tr class="{{ 'table-active' if s.selected else '' }}">
+                                            <td>{{ s.model_used }}</td>
+                                            <td>{{ s.model_accuracy }}</td>
+                                            <td>{{ s.mean_squared_error }}</td>
+                                            <td>{{ s.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+
+
+
+                                    <!-- <table class="table table-sm">
                                     <thead>
                                         <tr>
                                             <th scope="col">Model</th>
@@ -78,8 +111,7 @@
                                         </tr>
                                         {% endif %}
                                         {% endfor %}
-                                    </tbody>
-                                    </tbody>
+                                    </tbody> -->
                                 </table>
                             </div>
                             {% endfor %}
