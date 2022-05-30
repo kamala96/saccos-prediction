@@ -3,7 +3,7 @@
 import numpy as np
 from sqlalchemy import false
 from . import MODELS_FOLDER, db
-from .models import User, Saccos
+from .models import PredictionModels, User, Saccos
 from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request
 from flask_login import current_user, login_required
@@ -115,8 +115,11 @@ def delete_saccos(saccos_id):
 
 @main.route("/saccos/<int:saccos_id>", methods=['GET'])
 def view_saccos(saccos_id):
-    saccos = Saccos.query.get_or_404(saccos_id)
-    return render_template('view_saccos.html', saccos=saccos)
+    # saccos = Saccos.query.get_or_404(saccos_id)
+    saccos = Saccos.query.filter_by(id=saccos_id).first_or_404()
+    model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
+    print(model_summary)
+    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES)
 
 
 def get_model(saccos_id: int, performance: int):
