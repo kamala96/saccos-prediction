@@ -91,7 +91,7 @@ def pre_processing(data):
     # data[["CC", "TA", "NPL", "GLP-TL", "GLLR", "GL", "WO", "RCV"]] = data[["CC", "TA", "NPL", "GLP-TL", "GLLR", "GL", "WO", "RCV"]].apply(pd.to_numeric)
     data[RENAME_COLUMN["Date"]] = pd.to_datetime(
         data[RENAME_COLUMN["Date"]], format='%Y/%m/%d')
-    data = data.drop('xxxx', axis=1)
+    # data = data.drop('xxxx', axis=1)
     data = data.set_index(RENAME_COLUMN["Date"])
     return data
 
