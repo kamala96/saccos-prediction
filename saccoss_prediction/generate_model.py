@@ -102,24 +102,34 @@ def further_preprocessing(data):
     # Capital adequacy
     data[OUTCOME_NAMES.get(1)] = handle_division_by_zero(
         data[RENAME_COLUMN["CC"]], data[RENAME_COLUMN["TA"]])
+    twin_col1 = OUTCOME_NAMES.get(1)+" [passed goal?]"
+    data[twin_col1] = np.where(data[OUTCOME_NAMES.get(1)] >= 10, True, False)
     # data.loc[data['y1'] <= 0, 'y1'] = 0
     # data.loc[data['y1'] > 0, 'y1'] = data['y1'] * 100
 
     # Asset quality 1
     data[OUTCOME_NAMES.get(2)] = handle_division_by_zero(
         data[RENAME_COLUMN["NPL"]], data[RENAME_COLUMN["GLP-TL"]])
+    twin_col2 = OUTCOME_NAMES.get(2)+" [passed goal?]"
+    data[twin_col2] = np.where(data[OUTCOME_NAMES.get(2)] <= 5, True, False)
 
     # Asset quality 2
     data[OUTCOME_NAMES.get(3)] = handle_division_by_zero(
         data[RENAME_COLUMN["NEA"]], data[RENAME_COLUMN["TA"]])
+    twin_col3 = OUTCOME_NAMES.get(3)+" [passed goal?]"
+    data[twin_col3] = np.where(data[OUTCOME_NAMES.get(3)] <= 10, True, False)
 
     # Asset quality 3
     data[OUTCOME_NAMES.get(4)] = handle_division_by_zero(
         data[RENAME_COLUMN["GLLR"]], data[RENAME_COLUMN["GL"]])
+    twin_col4 = OUTCOME_NAMES.get(4)+" [passed goal?]"
+    data[twin_col4] = np.where(data[OUTCOME_NAMES.get(4)] <= 1, True, False)
 
     # Asset quality 4
     data[OUTCOME_NAMES.get(5)] = handle_division_by_zero(
         (data[RENAME_COLUMN["WO"]] - data[RENAME_COLUMN["RCV"]]), data[RENAME_COLUMN["TA"]])
+    twin_col5 = OUTCOME_NAMES.get(5)+" [passed goal?]"
+    data[twin_col5] = np.where(data[OUTCOME_NAMES.get(5)] < 1.5, True, False)
 
     data = data.asfreq('M')
     data = data.sort_index()
@@ -453,7 +463,7 @@ def generate():
             # db.session.commit()
 
             # cross_val_score(LinearRegression(), X, y)
-            flash('Success! --- The models has been generated for '+full_saccos.name, category="info")
+            flash('Re-generation successed for '+full_saccos.name+'. Please tap Home button above to view the generation summaries', category="info")
             # return str(score_1)
             return redirect(url_for('generate_model.generate'))
     return render_template('generate_models.html', list_of_saccos=list_of_saccos)
