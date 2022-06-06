@@ -14,7 +14,8 @@ class User(db.Model, UserMixin):
 class Workout(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pushups = db.Column(db.Integer, nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_posted = db.Column(db.DateTime, nullable=False,
+                            default=datetime.utcnow)
     comment = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -22,8 +23,10 @@ class Workout(db.Model):
 class Saccos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(1000))
-    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    prediction_models = db.relationship('PredictionModels', backref='author', lazy=True)
+    date_created = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
+    prediction_models = db.relationship(
+        'PredictionModels', cascade="all,delete", backref='author', lazy=True)
 
 
 class PredictionModels(db.Model):
@@ -32,8 +35,11 @@ class PredictionModels(db.Model):
     title = db.Column(db.String(1000))
     performance_criteria = db.Column(db.String(1000))
     model_used = db.Column(db.String(1000))
-    model_accuracy = db.Column(db.Float)
-    mean_squared_error = db.Column(db.Float)
+    r2_score = db.Column(db.Float)
+    mean_absolute_error = db.Column(db.Float)
+    root_mean_squared_error = db.Column(db.Float)
     selected = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    saccoss_id = db.Column(db.Integer, db.ForeignKey('saccos.id'), nullable=False)
+    date_created = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
+    saccoss_id = db.Column(
+        db.Integer, db.ForeignKey('saccos.id'), nullable=False)

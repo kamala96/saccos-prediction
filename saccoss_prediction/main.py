@@ -2,7 +2,7 @@
 
 import numpy as np
 from sqlalchemy import false
-from . import MODELS_FOLDER, UPLOAD_FOLDER, db
+from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
 from .models import PredictionModels, User, Saccos
 from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request
@@ -89,6 +89,7 @@ def add_saccos():
     This function adds a saccos into a database.
     '''
     saccoss = request.form.get('saccoss')
+    saccoss = saccoss.replace(" ", "-")
 
     exists = Saccos.query.filter_by(name=saccoss).first()
 
@@ -120,10 +121,11 @@ def view_saccos(saccos_id):
     filename = saccos.name.lower()
     filename = filename.replace(" ", "_")
     filename = filename+'.csv'
-    clean_sample = pd.read_csv(UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
+    clean_sample = pd.read_csv(
+        UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
     # model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
     # print(clean_sample.to_html())
-    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES, data=clean_sample)
+    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES, data=clean_sample, model_pic_folder=MODELS_PICS_FOLDER)
 
 
 def get_model(saccos_id: int, performance: int):

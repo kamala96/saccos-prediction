@@ -1,19 +1,21 @@
 import numbers
 import os
-import pathlib
+from pathlib import Path
 from flask import Blueprint, flash, render_template, url_for, request, redirect
 from joblib import dump
+from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import KFold, train_test_split
+from sqlalchemy import null
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required
 from .models import Saccos, User, PredictionModels
-from . import MODELS_FOLDER, UPLOAD_FOLDER, db
+from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
 
 import numpy as np
 import pandas as pd
@@ -36,6 +38,7 @@ RENAME_COLUMN = {
     'GLP-TL': 'Gross Loan Portifolio/Total loans', 'NEA': 'Non-earning assets',
     'GLLR': 'General loan loss reserve', 'GL': 'Gross loans', 'WO': 'Write-offs', 'RCV': 'Recoveries'
 }
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -102,7 +105,7 @@ def further_preprocessing(data):
     # Capital adequacy
     data[OUTCOME_NAMES.get(1)] = handle_division_by_zero(
         data[RENAME_COLUMN["CC"]], data[RENAME_COLUMN["TA"]])
-    twin_col1 = OUTCOME_NAMES.get(1)+" [passed goal?]"
+    twin_col1 = OUTCOME_NAMES.get(1)+" [Rating Status]"
     data[twin_col1] = np.where(data[OUTCOME_NAMES.get(1)] >= 10, True, False)
     # data.loc[data['y1'] <= 0, 'y1'] = 0
     # data.loc[data['y1'] > 0, 'y1'] = data['y1'] * 100
@@ -110,25 +113,25 @@ def further_preprocessing(data):
     # Asset quality 1
     data[OUTCOME_NAMES.get(2)] = handle_division_by_zero(
         data[RENAME_COLUMN["NPL"]], data[RENAME_COLUMN["GLP-TL"]])
-    twin_col2 = OUTCOME_NAMES.get(2)+" [passed goal?]"
+    twin_col2 = OUTCOME_NAMES.get(2)+" [Rating Status]"
     data[twin_col2] = np.where(data[OUTCOME_NAMES.get(2)] <= 5, True, False)
 
     # Asset quality 2
     data[OUTCOME_NAMES.get(3)] = handle_division_by_zero(
         data[RENAME_COLUMN["NEA"]], data[RENAME_COLUMN["TA"]])
-    twin_col3 = OUTCOME_NAMES.get(3)+" [passed goal?]"
+    twin_col3 = OUTCOME_NAMES.get(3)+" [Rating Status]"
     data[twin_col3] = np.where(data[OUTCOME_NAMES.get(3)] <= 10, True, False)
 
     # Asset quality 3
     data[OUTCOME_NAMES.get(4)] = handle_division_by_zero(
         data[RENAME_COLUMN["GLLR"]], data[RENAME_COLUMN["GL"]])
-    twin_col4 = OUTCOME_NAMES.get(4)+" [passed goal?]"
+    twin_col4 = OUTCOME_NAMES.get(4)+" [Rating Status]"
     data[twin_col4] = np.where(data[OUTCOME_NAMES.get(4)] <= 1, True, False)
 
     # Asset quality 4
     data[OUTCOME_NAMES.get(5)] = handle_division_by_zero(
-        (data[RENAME_COLUMN["WO"]] - data[RENAME_COLUMN["RCV"]]), data[RENAME_COLUMN["TA"]])
-    twin_col5 = OUTCOME_NAMES.get(5)+" [passed goal?]"
+        (data[RENAME_COLUMN["WO"]] - data[RENAME_COLUMN["RCV"]]), data[RENAME_COLUMN["GLP-TL"]])
+    twin_col5 = OUTCOME_NAMES.get(5)+" [Rating Status]"
     data[twin_col5] = np.where(data[OUTCOME_NAMES.get(5)] < 1.5, True, False)
 
     data = data.asfreq('M')
@@ -189,7 +192,8 @@ def define_x_y(data, y_column):
         y = data[y_column]
         return x, y
     elif y_column == OUTCOME_NAMES.get(5):
-        x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"], RENAME_COLUMN["TA"]]].values
+        x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"],
+                  RENAME_COLUMN["TA"]]].values
         y = data[y_column]
         return x, y
     else:
@@ -209,13 +213,19 @@ def save_model(model, path):
 def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     models = [LinearRegression(), RandomForestRegressor(),
               KNeighborsRegressor(), DecisionTreeRegressor()]
-    test_errors = {
+    r2_scores = {
         'LinearRegression()': 0,
         'RandomForestRegressor()': 0,
         'KNeighborsRegressor()': 0,
         'DecisionTreeRegressor()': 0,
     }
-    r2_scores = {
+    mean_absolute_errors = {
+        'LinearRegression()': 0,
+        'RandomForestRegressor()': 0,
+        'KNeighborsRegressor()': 0,
+        'DecisionTreeRegressor()': 0,
+    }
+    root_mean_squared_errors = {
         'LinearRegression()': 0,
         'RandomForestRegressor()': 0,
         'KNeighborsRegressor()': 0,
@@ -227,21 +237,22 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
         'KNeighborsRegressor()': False,
         'DecisionTreeRegressor()': False,
     }
-    best_model_name = 0
-    best_model_value = 0
+    best_model_name = null
 
     for model in models:
         model.fit(X_train, Y_train)
         predictions = model.predict(X_test)
-        test_errors[type(model).__name__ +
-                    "()"] = round(mean_absolute_error(Y_test, predictions), 5)
         r2_scores[type(model).__name__ +
                   "()"] = round(r2_score(Y_test, predictions), 5)
+        mean_absolute_errors[type(model).__name__ +
+                             "()"] = round(mean_absolute_error(Y_test, predictions), 5)
+        root_mean_squared_errors[type(model).__name__ +
+                                 "()"] = round(np.sqrt(mean_squared_error(Y_test, predictions)), 5)
+    best_model_name = min(mean_absolute_errors, key=mean_absolute_errors.get)
+    # best_model_value = mean_absolute_errors.get(best_model_name)
 
-    best_model_name = min(test_errors, key=test_errors.get)
-    best_model_value = test_errors.get(best_model_name)
-
-    pathlib.Path(MODELS_FOLDER, saccos).mkdir(exist_ok=True)
+    # Model file path
+    Path(MODELS_FOLDER, saccos).mkdir(exist_ok=True)
     model_path = MODELS_FOLDER+"/"+saccos+"/"+criteria+'.joblib'
 
     # fitting the right model
@@ -266,25 +277,43 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     error = mean_absolute_error(Y_test, prediction)
     dump(final_model, model_path)
 
+    # Model pics path
+    Path(MODELS_PICS_FOLDER, saccos).mkdir(parents=True, exist_ok=True)
+    model_pics_path = MODELS_PICS_FOLDER+"/"+saccos+"/"+criteria+'.png'
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    # plt.scatter(X_test, Y_test, color="red")
+    plt.plot(Y_test, prediction, color="green")
+    plt.title("Salary vs Experience (Testing set)")
+    plt.xlabel("Years of Experience")
+    plt.ylabel("Salary")
+    # plt.show()
+
+    fig.savefig(model_pics_path)
+    # pd.DataFrame(model.coef_, x.columns, columns = ['Coeff'])
+
     data_rows = []
     for model2 in models:
         row = PredictionModels(
-            title= type(model2).__name__ + ' for '+criteria+' of '+saccos,
-            performance_criteria = criteria,
-            model_used = type(model2).__name__,
-            mean_squared_error = test_errors.get(type(model2).__name__+"()"),
-            model_accuracy = r2_scores.get(type(model2).__name__+"()"),
-            selected = selected.get(type(model2).__name__+"()"),
-            saccoss_id = saccos_id)
+            title=type(model2).__name__ + ' for '+criteria+' of '+saccos,
+            performance_criteria=criteria,
+            model_used=type(model2).__name__,
+            r2_score=r2_scores.get(type(model2).__name__+"()"),
+            mean_absolute_error=mean_absolute_errors.get(
+                type(model2).__name__+"()"),
+            root_mean_squared_error=root_mean_squared_errors.get(
+                type(model2).__name__+"()"),
+            selected=selected.get(type(model2).__name__+"()"),
+            saccoss_id=saccos_id)
         data_rows.append(row)
-    
+
     db.session.add_all(data_rows)
     db.session.commit()
 
     # insert_model = PredictionModels(title='Generated Model 01', performance_criteria=OUTCOME_NAMES.get(
     #     1), model_used='Linear Regression', model_accuracy=score_1, saccoss_id=full_saccos.id)
 
-   
+
 #    db.session.add(insert_model_5)
 #    db.session.commit()
 
@@ -318,7 +347,7 @@ def generate():
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            pathlib.Path(UPLOAD_FOLDER, full_saccos.name.lower()).mkdir(
+            Path(UPLOAD_FOLDER, full_saccos.name.lower()).mkdir(
                 exist_ok=True)
             # some custom file name
             file.filename = renamed_file_name(full_saccos.name)
@@ -360,14 +389,12 @@ def generate():
                 X_4, y_4, test_size=0.2, random_state=0)
             X_train_5, X_test_5, y_train_5, y_test_5 = train_test_split(
                 X_5, y_5, test_size=0.2, random_state=0)
-            
 
             # Incase -- delete specific table
             # try:
             #     db.session.drop(PredictionModels)
             # except:
             #     pass
-            
 
             # Incase -- delete all records
             # try:
@@ -378,17 +405,22 @@ def generate():
 
             # Delete the records for a saccos -- then populate with new records
             try:
-                db.session.query(PredictionModels).filter(PredictionModels.saccoss_id==saccos_id).delete()
+                db.session.query(PredictionModels).filter(
+                    PredictionModels.saccoss_id == saccos_id).delete()
                 db.session.commit()
             except:
                 pass
-            
-            model_1_process = loop_models(X_train_1, X_test_1, y_train_1, y_test_1, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(1))
-            model_2_process = loop_models(X_train_2, X_test_2, y_train_2, y_test_2, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(2))
-            model_3_process = loop_models(X_train_3, X_test_3, y_train_3, y_test_3, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(3))
-            model_4_process = loop_models(X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(4))
-            model_5_process = loop_models(X_train_5, X_test_5, y_train_5, y_test_5, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(5))
-            
+
+            model_1_process = loop_models(
+                X_train_1, X_test_1, y_train_1, y_test_1, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(1))
+            model_2_process = loop_models(
+                X_train_2, X_test_2, y_train_2, y_test_2, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(2))
+            model_3_process = loop_models(
+                X_train_3, X_test_3, y_train_3, y_test_3, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(3))
+            model_4_process = loop_models(
+                X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(4))
+            model_5_process = loop_models(
+                X_train_5, X_test_5, y_train_5, y_test_5, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(5))
 
             # ml_linear_1 = LinearRegression()
             # ml_linear_1.fit(X_train_1, y_train_1)
@@ -413,7 +445,7 @@ def generate():
             # score_4 = round(r2_score(y_test_4, y_pred_4) * 100, 2)
             # score_5 = round(r2_score(y_test_5, y_pred_5) * 100, 2)
 
-            # pathlib.Path(MODELS_FOLDER, full_saccos.name.lower()).mkdir(
+            # Path(MODELS_FOLDER, full_saccos.name.lower()).mkdir(
             #     exist_ok=True)
 
             # model_path_1 = MODELS_FOLDER+"/" + \
@@ -463,7 +495,8 @@ def generate():
             # db.session.commit()
 
             # cross_val_score(LinearRegression(), X, y)
-            flash('Re-generation successed for '+full_saccos.name+'. Please tap Home button above to view the generation summaries', category="info")
+            flash('Re-generation successed for '+full_saccos.name +
+                  '. Please tap Home button above to view the generation summaries', category="info")
             # return str(score_1)
             return redirect(url_for('generate_model.generate'))
     return render_template('generate_models.html', list_of_saccos=list_of_saccos)

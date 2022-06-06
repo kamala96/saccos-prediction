@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -7,9 +8,11 @@ db = SQLAlchemy()
 migrate = Migrate()
 UPLOAD_FOLDER = 'datasets'
 MODELS_FOLDER = 'prediction-models'
+MODELS_PICS_FOLDER = os.path.join('saccoss_prediction/static', 'model-pics')
 
 # This is the first file that get called when a project is runned
 # Very useful when you want to set-up features only once
+
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +21,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MODELS_FOLDER'] = MODELS_FOLDER
+    app.config['MODELS_PICS_FOLDER'] = MODELS_PICS_FOLDER
 
     db.init_app(app)
     migrate.init_app(app, db)
