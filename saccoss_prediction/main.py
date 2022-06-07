@@ -123,9 +123,19 @@ def view_saccos(saccos_id):
     filename = filename+'.csv'
     clean_sample = pd.read_csv(
         UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
+    capital = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                          saccos.name.lower()+"/capital-adequacy.csv", sep='\t')
+    asset_1 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                          saccos.name.lower()+"/asset-quality-01.csv", sep='\t')
+    asset_2 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                          saccos.name.lower()+"/asset-quality-02.csv", sep='\t')
+    asset_3 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                          saccos.name.lower()+"/asset-quality-03.csv", sep='\t')
+    asset_4 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                          saccos.name.lower()+"/asset-quality-04.csv", sep='\t')
     # model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
     # print(clean_sample.to_html())
-    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES, data=clean_sample, model_pic_folder=MODELS_PICS_FOLDER)
+    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES, data=clean_sample, capital=capital, asset_1=asset_1, asset_2=asset_2, asset_3=asset_3, asset_4=asset_4)
 
 
 def get_model(saccos_id: int, performance: int):

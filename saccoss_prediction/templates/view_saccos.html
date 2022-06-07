@@ -8,7 +8,7 @@
     <div class="container">
 
         <div class="alert alert-success" role="alert">
-            <h5> {{ 'DETAILED VIEW OF %s' % saccos.name }} </h5>
+            <h5> {{ 'DETAILED EVALUATION OF %s' % saccos.name }} </h5>
         </div>
 
         <!-- Tabs navs -->
@@ -46,8 +46,8 @@
                                     Note:
                                     <ul>
                                         <li>
-                                            The model in a row with the dark background is the best choice used to
-                                            re-generate the prediction model
+                                            The model in a row with the dark background is the best choice that is used
+                                            to generate the prediction model
                                         </li>
                                         <li>
                                             R^2 (R2 Squared): Ranges from 0 to 1, the closer the value to 1,
@@ -79,63 +79,78 @@
                                 <div class="table-responsive">
                                     <div class="container">
                                         <div class="row">
-
-
-                                            <div class="col-7">
-                                                <table class="table table-bordered table-sm" id="dataTable{{key}}"
-                                                    width="100%" cellspacing="0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">Model</th>
-                                                            <th scope="col">R^2</th>
-                                                            <th scope="col">MAE</th>
-                                                            <th scope="col">RMSE</th>
-                                                            <th scope="col">Date Generated</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {% for s in saccos.prediction_models %}
-                                                        {% if s.performance_criteria == value %}
-                                                        <tr class="{{ 'table-active' if s.selected else '' }}">
-                                                            <td>{{ s.model_used }}</td>
-                                                            <td>{{ s.r2_score }}</td>
-                                                            <td>{{ s.mean_absolute_error }}</td>
-                                                            <td>{{ s.root_mean_squared_error }}</td>
-                                                            <td>{{ s.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
-                                                            </td>
-                                                        </tr>
-                                                        {% endif %}
-                                                        {% endfor %}
-                                                    </tbody>
-
-
-
-                                                    <!-- <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Model</th>
-                                            <th scope="col">Prediction Accuracy</th>
-                                            <th scope="col">Mean Squared Error</th>
-                                            <th scope="col">Date Generated</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for s in saccos.prediction_models %}
-                                        {% if s.performance_criteria == value %}
-                                        <tr class="{{ 'table-active' if s.selected else '' }}">
-                                            <td>{{ s.model_used }}</td>
-                                            <td>{{ s.model_accuracy }}</td>
-                                            <td>{{ s.mean_squared_error }}</td>
-                                            <td>{{ s.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}</td>
-                                        </tr>
-                                        {% endif %}
-                                        {% endfor %}
-                                    </tbody> -->
-                                                </table>
+                                            <div class="col-6">
+                                                <div class="card mb-2">
+                                                    <div class="card-header">
+                                                        LIST OF MODEL TESTED
+                                                    </div>
+                                                    <div class="card-body table-responsive">
+                                                        <table class="table table-bordered table-sm"
+                                                            id="dataTable{{key}}" width="100%" cellspacing="0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col">Model</th>
+                                                                    <th scope="col">R^2</th>
+                                                                    <th scope="col">MAE</th>
+                                                                    <th scope="col">RMSE</th>
+                                                                    <th scope="col">Date Generated</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for s in saccos.prediction_models %}
+                                                                {% if s.performance_criteria == value %}
+                                                                <tr class="{{ 'table-active' if s.selected else '' }}">
+                                                                    <td>{{ s.model_used }}</td>
+                                                                    <td>{{ s.r2_score }}</td>
+                                                                    <td>{{ s.mean_absolute_error }}</td>
+                                                                    <td>{{ s.root_mean_squared_error }}</td>
+                                                                    <td>{{ s.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
+                                                                    </td>
+                                                                </tr>
+                                                                {% endif %}
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-5">
-                                                <img src="{{ url_for('static', filename= 'model-pics/'+saccos.name.lower()+'/'+value.lower()+'.png') }}"
-                                                    alt="{{ saccos.name.lower() }}">
+                                            <div class="col-6">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        ACTTUAL V/S PREDICTED
+                                                    </div>
+                                                    <div class="card-body table-responsive">
+                                                        {% if value == 'capital-adequacy' %}
+                                                        {{ capital.to_html(classes='table table-bordered table-sm', table_id="dataTablee1",
+                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
+                                                    safe }}
+
+                                                        {% elif value == 'asset-quality-01' %}
+                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee2",
+                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
+                                                    safe }}
+
+                                                        {% elif value == 'asset-quality-02' %}
+                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee3",
+                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
+                                                    safe }}
+
+                                                        {% elif value == 'asset-quality-03' %}
+                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee4",
+                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
+                                                    safe }}
+
+                                                        {% elif value == 'asset-quality-04' %}
+                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee5",
+                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
+                                                    safe }}
+
+                                                        {% else %}
+                                                        {{ 'Null'}}
+
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

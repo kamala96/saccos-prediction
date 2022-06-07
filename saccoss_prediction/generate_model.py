@@ -82,6 +82,101 @@ def handle_division_by_zero(n, d):
         return 0
 
 
+def capital_adequacy_rating(row):
+    if row >= 11.0:
+        result = 'OP'
+
+    elif row >= 9.0:
+        result = 'SP'
+
+    elif row >= 6.0:
+        result = 'AP'
+
+    elif row >= 4.0:
+        result = 'UP'
+
+    else:
+        result = 'DP'
+
+    return result
+
+
+def asset_quality_01_rating(row):
+    if row > 10.1:
+        result = 'DP'
+
+    elif row >= 8.1:
+        result = 'UP'
+
+    elif row >= 6.1:
+        result = 'AP'
+
+    elif row >= 5.1:
+        result = 'SP'
+
+    else:
+        result = 'OP'
+
+    return result
+
+
+def asset_quality_02_rating(row):
+    if row > 21.1:
+        result = 'DP'
+
+    elif row >= 18.1:
+        result = 'UP'
+
+    elif row >= 15.1:
+        result = 'AP'
+
+    elif row >= 10.1:
+        result = 'SP'
+
+    else:
+        result = 'OP'
+
+    return result
+
+
+def asset_quality_03_rating(row):
+    if row > 1.0:
+        result = 'OP'
+
+    elif row >= 0.75:
+        result = 'SP'
+
+    elif row >= 0.50:
+        result = 'AP'
+
+    elif row >= 0.25:
+        result = 'UP'
+
+    else:
+        result = 'DP'
+
+    return result
+
+
+def asset_quality_04_rating(row):
+    if row >= 3.6:
+        result = 'DP'
+
+    elif row >= 2.6:
+        result = 'UP'
+
+    elif row >= 2.1:
+        result = 'AP'
+
+    elif row >= 1.6:
+        result = 'SP'
+
+    else:
+        result = 'OP'
+
+    return result
+
+
 def pre_processing(data):
     pd.set_option('display.float_format',  '{:,.2f}'.format)
     data[[
@@ -105,34 +200,26 @@ def further_preprocessing(data):
     # Capital adequacy
     data[OUTCOME_NAMES.get(1)] = handle_division_by_zero(
         data[RENAME_COLUMN["CC"]], data[RENAME_COLUMN["TA"]])
-    twin_col1 = OUTCOME_NAMES.get(1)+" [Rating Status]"
-    data[twin_col1] = np.where(data[OUTCOME_NAMES.get(1)] >= 10, True, False)
+    # twin_col1 = OUTCOME_NAMES.get(1)+" [Rating Status]"
+    # data[twin_col1] = np.where(data[OUTCOME_NAMES.get(1)] >= 10, True, False)
     # data.loc[data['y1'] <= 0, 'y1'] = 0
     # data.loc[data['y1'] > 0, 'y1'] = data['y1'] * 100
 
     # Asset quality 1
     data[OUTCOME_NAMES.get(2)] = handle_division_by_zero(
         data[RENAME_COLUMN["NPL"]], data[RENAME_COLUMN["GLP-TL"]])
-    twin_col2 = OUTCOME_NAMES.get(2)+" [Rating Status]"
-    data[twin_col2] = np.where(data[OUTCOME_NAMES.get(2)] <= 5, True, False)
 
     # Asset quality 2
     data[OUTCOME_NAMES.get(3)] = handle_division_by_zero(
         data[RENAME_COLUMN["NEA"]], data[RENAME_COLUMN["TA"]])
-    twin_col3 = OUTCOME_NAMES.get(3)+" [Rating Status]"
-    data[twin_col3] = np.where(data[OUTCOME_NAMES.get(3)] <= 10, True, False)
 
     # Asset quality 3
     data[OUTCOME_NAMES.get(4)] = handle_division_by_zero(
         data[RENAME_COLUMN["GLLR"]], data[RENAME_COLUMN["GL"]])
-    twin_col4 = OUTCOME_NAMES.get(4)+" [Rating Status]"
-    data[twin_col4] = np.where(data[OUTCOME_NAMES.get(4)] <= 1, True, False)
 
     # Asset quality 4
     data[OUTCOME_NAMES.get(5)] = handle_division_by_zero(
         (data[RENAME_COLUMN["WO"]] - data[RENAME_COLUMN["RCV"]]), data[RENAME_COLUMN["GLP-TL"]])
-    twin_col5 = OUTCOME_NAMES.get(5)+" [Rating Status]"
-    data[twin_col5] = np.where(data[OUTCOME_NAMES.get(5)] < 1.5, True, False)
 
     data = data.asfreq('M')
     data = data.sort_index()
@@ -167,6 +254,18 @@ def further_preprocessing(data):
         4)].apply(handle_percentage_negatives)
     data[OUTCOME_NAMES.get(5)] = data[OUTCOME_NAMES.get(
         5)].apply(handle_percentage_negatives)
+
+    # Adding rating columns
+    twin_col1 = OUTCOME_NAMES.get(1)+" [Rating Status]"
+    data[twin_col1] = data[OUTCOME_NAMES.get(1)].apply(capital_adequacy_rating)
+    twin_col2 = OUTCOME_NAMES.get(2)+" [Rating Status]"
+    data[twin_col2] = data[OUTCOME_NAMES.get(2)].apply(asset_quality_01_rating)
+    twin_col3 = OUTCOME_NAMES.get(3)+" [Rating Status]"
+    data[twin_col3] = data[OUTCOME_NAMES.get(3)].apply(asset_quality_02_rating)
+    twin_col4 = OUTCOME_NAMES.get(4)+" [Rating Status]"
+    data[twin_col4] = data[OUTCOME_NAMES.get(4)].apply(asset_quality_03_rating)
+    twin_col5 = OUTCOME_NAMES.get(5)+" [Rating Status]"
+    data[twin_col5] = data[OUTCOME_NAMES.get(5)].apply(asset_quality_04_rating)
 
     final = data.fillna(0)
 
@@ -279,18 +378,22 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
 
     # Model pics path
     Path(MODELS_PICS_FOLDER, saccos).mkdir(parents=True, exist_ok=True)
-    model_pics_path = MODELS_PICS_FOLDER+"/"+saccos+"/"+criteria+'.png'
+    model_predictions_path = MODELS_PICS_FOLDER+"/"+saccos+"/"+criteria+'.csv'
 
-    fig, ax = plt.subplots(figsize=(6, 4))
-    # plt.scatter(X_test, Y_test, color="red")
-    plt.plot(Y_test, prediction, color="green")
-    plt.title("Salary vs Experience (Testing set)")
-    plt.xlabel("Years of Experience")
-    plt.ylabel("Salary")
-    # plt.show()
+    # fig, ax = plt.subplots(figsize=(6, 4))
+    # # plt.scatter(X_test, Y_test, color="red")
+    # plt.plot(Y_test, prediction, color="green")
+    # plt.title("Salary vs Experience (Testing set)")
+    # plt.xlabel("Years of Experience")
+    # plt.ylabel("Salary")
+    # # plt.show()
 
-    fig.savefig(model_pics_path)
+    # fig.savefig(model_pics_path)
     # pd.DataFrame(model.coef_, x.columns, columns = ['Coeff'])
+
+    final_df = pd.DataFrame(data=Y_test)
+    final_df['predicted'] = prediction
+    final_df.to_csv(model_predictions_path, sep='\t')
 
     data_rows = []
     for model2 in models:
@@ -321,7 +424,7 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     # print("model_name:", best_model_name)
     # print("model_error:", best_model_value)
     # print("last_model_error:", error)
-    print("rows:", data_rows)
+    # print("rows:", data_rows)
     return True
 
 

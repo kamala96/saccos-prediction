@@ -8,6 +8,7 @@
 
 $(document).ready(function () {
   $('#dataTable').DataTable({
+    "pageLength": 4,
     dom: 'Bfrtip',
     buttons: [
       'copy', 'csv', 'excel', 'pdf', 'print'
@@ -53,6 +54,56 @@ $(document).ready(function () {
 
 $(document).ready(function () {
   $('#dataTable5').DataTable({
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTablee1').DataTable({
+    "pageLength": 7,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTablee2').DataTable({
+    "pageLength": 7,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTablee3').DataTable({
+    "pageLength": 7,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTablee4').DataTable({
+    "pageLength": 7,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTablee5').DataTable({
+    "pageLength": 7,
     dom: 'Bfrtip',
     buttons: [
       'copy', 'csv', 'excel', 'pdf', 'print'
