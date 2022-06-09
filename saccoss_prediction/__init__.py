@@ -46,4 +46,7 @@ def create_app():
     from .generate_model import generate_model as generate_model_blueprint
     app.register_blueprint(generate_model_blueprint)
 
+    from .reporting import reporting as reporting_blueprint
+    app.register_blueprint(reporting_blueprint)
+
     return app

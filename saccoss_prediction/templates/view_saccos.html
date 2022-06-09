@@ -88,7 +88,12 @@
                                         <td>{{ e.asset_quality_03_Rating_Status }}</td>
                                         <td>{{ e.asset_quality_04_Rating_Status }}</td>
                                         <td>
-                                            <button class='btn btn-primary btn-sm'>Generate Report</button>
+                                            <form method="post" action="{{ url_for('reporting.report') }}">
+                                                <input type="number" name="evaluation_id" value="{{ e.ev_id }}"
+                                                    style="display: none;">
+                                                <input type="submit" class="btn btn-primary btn-sm"
+                                                    value="Generate Report" />
+                                            </form>
                                         </td>
                                     </tr>
                                     {% endfor %}
