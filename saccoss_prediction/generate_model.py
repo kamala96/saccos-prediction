@@ -3,18 +3,15 @@ import os
 from pathlib import Path
 from flask import Blueprint, flash, render_template, url_for, request, redirect
 from joblib import dump
-from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import KFold, train_test_split
+from sklearn.model_selection import train_test_split
 from sqlalchemy import null
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required
-from .models import Saccos, User, PredictionModels
+from .models import ActualAndPredicted, Evaluations, Saccos, PredictionModels
 from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
 
 import numpy as np
@@ -69,7 +66,10 @@ def handle_percentage_negatives(row):
             # whatever  you logic
             return 0
         else:
-            return row * 100
+            row = row * 100
+            row = "{:.2f}".format(row)
+            row = float(row)
+            return row
     return 0
 
 
@@ -292,7 +292,7 @@ def define_x_y(data, y_column):
         return x, y
     elif y_column == OUTCOME_NAMES.get(5):
         x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"],
-                  RENAME_COLUMN["TA"]]].values
+                  RENAME_COLUMN["GLP-TL"]]].values
         y = data[y_column]
         return x, y
     else:
@@ -391,10 +391,31 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     # fig.savefig(model_pics_path)
     # pd.DataFrame(model.coef_, x.columns, columns = ['Coeff'])
 
+    # Preparing and recording actual vs predicted
     final_df = pd.DataFrame(data=Y_test)
     final_df['predicted'] = prediction
     final_df.to_csv(model_predictions_path, sep='\t')
 
+    # Initialize empty array of insert data
+    actual_and_predicted_rows = []
+
+    # Iterate through the dataset and prepare insert query
+    for i, row in final_df.iterrows():
+        my_row = ActualAndPredicted(
+            month=i,
+            prediction_model=type(final_model).__name__,
+            performance_criteria=criteria,
+            actual=row[criteria],
+            predicted=float("{:.2f}".format(row['predicted'])),
+            saccoss_id=saccos_id
+        )
+        actual_and_predicted_rows.append(my_row)
+
+    # save our data
+    db.session.add_all(actual_and_predicted_rows)
+    db.session.commit()
+
+    # Recording model informations
     data_rows = []
     for model2 in models:
         row = PredictionModels(
@@ -419,17 +440,12 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
 
 #    db.session.add(insert_model_5)
 #    db.session.commit()
-
-    # print("results:", test_errors)
-    # print("model_name:", best_model_name)
-    # print("model_error:", best_model_value)
-    # print("last_model_error:", error)
-    # print("rows:", data_rows)
     return True
 
 
 @generate_model.route('/generate', methods=['GET', 'POST'])
 def generate():
+    title = 'SEPS - Model Generation Page'
     list_of_saccos = Saccos.query.all()
     if request.method == 'POST':
 
@@ -464,6 +480,56 @@ def generate():
             data = further_preprocessing(data)
             data.to_csv(UPLOAD_FOLDER+"/" +
                         full_saccos.name.lower()+'/clean_'+filename, sep='\t')
+
+            # Delete the evaluation records for a saccos -- then populate with new records
+            try:
+                db.session.query(Evaluations).filter(
+                    Evaluations.saccoss_id == saccos_id).delete()
+                db.session.commit()
+            except:
+                pass
+
+            # cols = "','".join([str(i) for i in data.columns.tolist()])
+            # print(cols)
+
+            # Initialize empty array of insert data
+            data_rows = []
+
+            # Iterate through the dataset and prepare insert query
+            for i, row in data.iterrows():
+                my_row = Evaluations(
+                    month=i,
+                    cc=row[RENAME_COLUMN["CC"]],
+                    ta=row[RENAME_COLUMN["TA"]],
+                    npl=row[RENAME_COLUMN["NPL"]],
+                    glp_tl=row[RENAME_COLUMN["GLP-TL"]],
+                    nea=row[RENAME_COLUMN["NEA"]],
+                    gllr=row[RENAME_COLUMN["GLLR"]],
+                    gl=row[RENAME_COLUMN["GL"]],
+                    wo=row[RENAME_COLUMN["WO"]],
+                    rcv=row[RENAME_COLUMN["RCV"]],
+                    capital_adequacy=row[OUTCOME_NAMES.get(1)],
+                    asset_quality_01=row[OUTCOME_NAMES.get(2)],
+                    asset_quality_02=row[OUTCOME_NAMES.get(3)],
+                    asset_quality_03=row[OUTCOME_NAMES.get(4)],
+                    asset_quality_04=row[OUTCOME_NAMES.get(5)],
+                    capital_adequacy_Rating_Status=row[OUTCOME_NAMES.get(
+                        1)+" [Rating Status]"],
+                    asset_quality_01_Rating_Status=row[OUTCOME_NAMES.get(
+                        2)+" [Rating Status]"],
+                    asset_quality_02_Rating_Status=row[OUTCOME_NAMES.get(
+                        3)+" [Rating Status]"],
+                    asset_quality_03_Rating_Status=row[OUTCOME_NAMES.get(
+                        4)+" [Rating Status]"],
+                    asset_quality_04_Rating_Status=row[OUTCOME_NAMES.get(
+                        5)+" [Rating Status]"],
+                    saccoss_id=saccos_id
+                )
+                data_rows.append(my_row)
+
+            # save our data
+            db.session.add_all(data_rows)
+            db.session.commit()
 
             x_y_splits_1 = define_x_y(data, OUTCOME_NAMES.get(1))
             x_y_splits_2 = define_x_y(data, OUTCOME_NAMES.get(2))
@@ -506,10 +572,18 @@ def generate():
             # except:
             #     pass
 
-            # Delete the records for a saccos -- then populate with new records
+            # Delete the prediction records for a saccos -- then populate with new records
             try:
                 db.session.query(PredictionModels).filter(
                     PredictionModels.saccoss_id == saccos_id).delete()
+                db.session.commit()
+            except:
+                pass
+
+            # Delete the Actual_and_Predicited records for a saccos -- then populate with new records
+            try:
+                db.session.query(ActualAndPredicted).filter(
+                    ActualAndPredicted.saccoss_id == saccos_id).delete()
                 db.session.commit()
             except:
                 pass
@@ -602,4 +676,7 @@ def generate():
                   '. Please tap Home button above to view the generation summaries', category="info")
             # return str(score_1)
             return redirect(url_for('generate_model.generate'))
-    return render_template('generate_models.html', list_of_saccos=list_of_saccos)
+    return render_template(
+        'generate_models.html', title=title,
+        list_of_saccos=list_of_saccos
+    )

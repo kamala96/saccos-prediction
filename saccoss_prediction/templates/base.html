@@ -3,7 +3,7 @@
 
 <head>
   {% block head %}
-  <title>Saccos Evaluation and Prediction System (SEPS)</title>
+  <title> {{ title }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename= 'images/muscle.ico') }}" />
   <link href="https://fonts.googleapis.com/css2?family=Arvo&display=swap" rel="stylesheet" />
@@ -11,11 +11,11 @@
   <link rel="stylesheet" href="{{ url_for('static', filename= 'beauty.css') }}" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
     integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
-    
+
   <link rel="stylesheet" href="{{ url_for('static', filename= 'dataTables.bootstrap4.css') }}" />
   <!-- <link rel="stylesheet" href="{{ url_for('static', filename= 'jquery.dataTables.min.css') }}" /> -->
   <link rel="stylesheet" href="{{ url_for('static', filename= 'buttons.dataTables.min.css') }}" />
-  
+
   <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
   <script src="{{ url_for('static', filename= 'jquery-3.5.1.js') }}"></script>
 

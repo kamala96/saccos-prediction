@@ -110,3 +110,53 @@ $(document).ready(function () {
     ]
   });
 });
+
+$(document).ready(function () {
+  $('#dataTable_diff1').DataTable({
+    "pageLength": 4,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTable_diff2').DataTable({
+    "pageLength": 4,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTable_diff3').DataTable({
+    "pageLength": 4,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTable_diff4').DataTable({
+    "pageLength": 4,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});
+
+$(document).ready(function () {
+  $('#dataTable_diff5').DataTable({
+    "pageLength": 4,
+    dom: 'Bfrtip',
+    buttons: [
+      'copy', 'csv', 'excel', 'pdf', 'print'
+    ]
+  });
+});

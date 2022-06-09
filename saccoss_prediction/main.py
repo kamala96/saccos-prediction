@@ -1,5 +1,6 @@
 # This file will handle CRUD operations
 
+from matplotlib.pyplot import title
 import numpy as np
 from sqlalchemy import false
 from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
@@ -8,7 +9,7 @@ from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request
 from flask_login import current_user, login_required
 from joblib import dump, load
-from .generate_model import OUTCOME_NAMES
+from .generate_model import OUTCOME_NAMES, asset_quality_01_rating, asset_quality_02_rating, asset_quality_03_rating, asset_quality_04_rating, capital_adequacy_rating
 import pandas as pd
 from IPython.display import HTML
 
@@ -20,13 +21,21 @@ main = Blueprint("main", __name__)
 @main.route('/')
 def index():
     list_of_saccos = Saccos.query.all()
-    return render_template('index.html', list_of_saccos=list_of_saccos)
+    title = 'Saccos Evaluation and Prediction System (SEPS)'
+    return render_template(
+        'index.html',
+        title=title,
+        list_of_saccos=list_of_saccos
+    )
 
 
 @main.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', name=current_user.name)
+    return render_template(
+        'profile.html',
+        name=current_user.name
+    )
 
 
 @main.route('/new')
@@ -133,9 +142,15 @@ def view_saccos(saccos_id):
                           saccos.name.lower()+"/asset-quality-03.csv", sep='\t')
     asset_4 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
                           saccos.name.lower()+"/asset-quality-04.csv", sep='\t')
+    title = 'SEPS - ' + saccos.name
     # model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
     # print(clean_sample.to_html())
-    return render_template('view_saccos.html', saccos=saccos, outcomes=OUTCOME_NAMES, data=clean_sample, capital=capital, asset_1=asset_1, asset_2=asset_2, asset_3=asset_3, asset_4=asset_4)
+    return render_template(
+        'view_saccos.html',
+        title=title, saccos=saccos,
+        outcomes=OUTCOME_NAMES, data=clean_sample, capital=capital,
+        asset_1=asset_1, asset_2=asset_2, asset_3=asset_3, asset_4=asset_4
+    )
 
 
 def get_model(saccos_id: int, performance: int):
@@ -143,8 +158,9 @@ def get_model(saccos_id: int, performance: int):
     This function manages a retrieval of model files.
     '''
     saccos_data = Saccos.query.get_or_404(saccos_id)
-    sub_path = OUTCOME_NAMES.get(performance)
-    base_path = MODELS_FOLDER+"/"+saccos_data.name.lower()+"/"+sub_path+'.joblib'
+    saccos_name = str(saccos_data.name.lower())
+    sub_path = str(OUTCOME_NAMES.get(performance))
+    base_path = MODELS_FOLDER+"/"+saccos_name+"/"+sub_path+'.joblib'
 
     # with open(base_path, 'rb') as file:
     #         joblib_model = load(file)
@@ -182,7 +198,12 @@ def get_model(saccos_id: int, performance: int):
 # @login_required
 def do_predict():
     list_of_saccos = Saccos.query.all()
-    return render_template('do_predict.html', list_of_saccos=list_of_saccos, criteria=OUTCOME_NAMES)
+    title = 'SEPS - Prediction Page'
+    return render_template(
+        'do_predict.html',
+        title=title, list_of_saccos=list_of_saccos,
+        criteria=OUTCOME_NAMES
+    )
 
 
 @main.route('/predict', methods=['POST'])
@@ -190,26 +211,40 @@ def do_predict():
 def do_predict_post():
     list_of_saccos = Saccos.query.all()
 
-    # obtain all form values and place them in an array, convert into integers
+    # obtain all form values and place them in an array, convert into floats
     int_features = [float(x) for x in request.form.values()]
 
     # obtain the saccos ID and performance metric
-    saccos_id = int_features[0]
-    performance_metric = int_features[1]
+    saccos_id = int(int_features[0])
+    performance_metric = int(int_features[1])
 
-    # remove the [saccos ID and performance metric] and combine the remaining into a final numpy array
-    del int_features[0]
-    del int_features[1]
+    saccos_data = Saccos.query.get_or_404(saccos_id)
+
+    status = True
+    criteria = OUTCOME_NAMES.get(performance_metric)
+    features = ''
+    message = ''
+    model_used = ''
+    saccos = saccos_data.name
+    output = 0
+    ratings = ''
+
+    # remove the [saccos ID and performance metric -first two elements] and combine the remaining into a final numpy array
+    n = 2
+    int_features = int_features[n:]
+    # del int_features[:n]
     final_features = [np.array(int_features)]
 
     model = get_model(saccos_id, performance_metric)
-    prediction_text = ""
 
     if(model == False):
-        prediction_text = "The selection has not yet implemented"
+        status = False
+        message = "The selection has not yet implemented"
     else:
         # predict the price given the values inputted by user
         prediction = model.predict(final_features)
+
+        model_used = type(model).__name__
 
         # Round the output to 2 decimal places
         output = round(prediction[0], 2)
@@ -217,12 +252,56 @@ def do_predict_post():
         # If the output is negative, the values entered are unreasonable to the context of the application
         # If the output is greater than 0, return prediction
         if output <= 0:
-            prediction_text = 'The Predicted Value of {} is 0%, may be the values entered are not reasonable'.format(
-                OUTCOME_NAMES.get(performance_metric))
+            message = 'May be the values entered are not reasonable to the context'
         else:
-            prediction_text = 'The Predicted Value is: {}%'.format(output)
+            message = 'Prediction is greatly reasonable'
+
+    title = 'SEPS - Predicting ' + str(criteria) + ' for ' + saccos
+
+    if performance_metric == 1:
+        ratings = capital_adequacy_rating(float(output))
+        features = {
+            'Core Capital': int_features[0],
+            'Total Assets': int_features[1]
+        }
+    elif performance_metric == 2:
+        ratings = asset_quality_01_rating(float(output))
+        features = {
+            'Non-performing loans': int_features[0],
+            'Gross Loan Portifolio/Total loans': int_features[1]
+        }
+    elif performance_metric == 3:
+        ratings = asset_quality_02_rating(float(output))
+        features = {
+            'Non-earning assets': int_features[0],
+            'Total assets': int_features[1]
+        }
+    elif performance_metric == 4:
+        ratings = asset_quality_03_rating(float(output))
+        features = {
+            'General loan loss reserve': int_features[0],
+            'Gross loans': int_features[1]
+        }
+    elif performance_metric == 5:
+        ratings = asset_quality_04_rating(float(output))
+        features = {
+            'Write-offs': int_features[0],
+            'Recoveries': int_features[1],
+            'Total loans': int_features[2],
+        }
+    else:
+        pass
 
     return render_template(
         'do_predict.html',
-        prediction_text=prediction_text,
-        list_of_saccos=list_of_saccos, criteria=OUTCOME_NAMES)
+        title=title,
+        list_of_saccos=list_of_saccos,
+        status=status,
+        criteria=criteria,
+        features=features,
+        message=message,
+        model_used=model_used,
+        saccos=saccos,
+        ratings=ratings,
+        output=output
+    )

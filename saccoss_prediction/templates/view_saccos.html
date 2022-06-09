@@ -31,7 +31,70 @@
                 <div class="card mb-2">
                     <div class="card-body">
                         <div class="table-responsive">
-                            {{ data.to_html(classes='table table-bordered table-sm', table_id="dataTable", float_format='{:10.2f}'.format, index=False, render_links=True) | safe }}
+                            <table class="table table-sm" id="dataTable">
+                                <caption>
+                                    OP -> <strong>Outstanding Performance</strong>,&nbsp;
+                                    SP -> <strong>Superior Performance</strong>,&nbsp;
+                                    AP -> <strong>Avarage Performance</strong><br>
+                                    UP -> <strong>Under Performance</strong>,&nbsp;
+                                    DP -> <strong>Doubtful Performance</strong><br>
+                                </caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Month</th>
+                                        <th scope="col">Core capital (TSH.)</th>
+                                        <th scope="col">Total assets (TSH.)</th>
+                                        <th scope="col">Non-performing loans (TSH.)</th>
+                                        <th scope="col">Gross Loan Portifolio/Total loans (TSH.)</th>
+                                        <th scope="col">Non-earning assets (TSH.)</th>
+                                        <th scope="col">General loan loss reserve (TSH.)</th>
+                                        <th scope="col">Gross loans (TSH.)</th>
+                                        <th scope="col">Write-offs (TSH.)</th>
+                                        <th scope="col">Recoveries (TSH.)</th>
+                                        <th scope="col">capital-adequacy (%)</th>
+                                        <th scope="col">asset-quality-01 (%)</th>
+                                        <th scope="col">asset-quality-02 (%)</th>
+                                        <th scope="col">asset-quality-03 (%)</th>
+                                        <th scope="col">asset-quality-04 (%)</th>
+                                        <th scope="col">capital-adequacy [Rating Status] (%)</th>
+                                        <th scope="col">asset-quality-01 [Rating Status] (%)</th>
+                                        <th scope="col">asset-quality-02 [Rating Status] (%)</th>
+                                        <th scope="col">asset-quality-03 [Rating Status] (%)</th>
+                                        <th scope="col">asset-quality-04 [Rating Status] (%)</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for e in saccos.evaluations %}
+                                    <tr>
+                                        <td>{{ e.month.strftime("%Y-%m-%d") }}</td>
+                                        <td>{{ e.cc }}</td>
+                                        <td>{{ e.ta }}</td>
+                                        <td>{{ e.npl }}</td>
+                                        <td>{{ e.glp_tl }}</td>
+                                        <td>{{ e.nea }}</td>
+                                        <td>{{ e.gllr }}</td>
+                                        <td>{{ e.gl }}</td>
+                                        <td>{{ e.wo }}</td>
+                                        <td>{{ e.rcv }}</td>
+                                        <td>{{ e.capital_adequacy }}</td>
+                                        <td>{{ e.asset_quality_01 }}</td>
+                                        <td>{{ e.asset_quality_02 }}</td>
+                                        <td>{{ e.asset_quality_03 }}</td>
+                                        <td>{{ e.asset_quality_04 }}</td>
+                                        <td>{{ e.capital_adequacy_Rating_Status }}</td>
+                                        <td>{{ e.asset_quality_01_Rating_Status }}</td>
+                                        <td>{{ e.asset_quality_02_Rating_Status }}</td>
+                                        <td>{{ e.asset_quality_03_Rating_Status }}</td>
+                                        <td>{{ e.asset_quality_04_Rating_Status }}</td>
+                                        <td>
+                                            <button class='btn btn-primary btn-sm'>Generate Report</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <!-- {{ data.to_html(classes='table table-bordered table-sm', table_id="dataTable", float_format='{:10.2f}'.format, index=False, render_links=True) | safe }} -->
                         </div>
                     </div>
                 </div>
@@ -78,7 +141,7 @@
                                 </li>
                                 <div class="table-responsive">
                                     <div class="container">
-                                        <div class="row">
+                                        <div class="row mt-2">
                                             <div class="col-6">
                                                 <div class="card mb-2">
                                                     <div class="card-header">
@@ -120,35 +183,33 @@
                                                         ACTUAL --VS-- PREDICTED (TEST DATA SET)
                                                     </div>
                                                     <div class="card-body table-responsive">
-                                                        {% if value == 'capital-adequacy' %}
-                                                        {{ capital.to_html(classes='table table-bordered table-sm', table_id="dataTablee1",
-                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
-                                                    safe }}
-
-                                                        {% elif value == 'asset-quality-01' %}
-                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee2",
-                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
-                                                    safe }}
-
-                                                        {% elif value == 'asset-quality-02' %}
-                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee3",
-                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
-                                                    safe }}
-
-                                                        {% elif value == 'asset-quality-03' %}
-                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee4",
-                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
-                                                    safe }}
-
-                                                        {% elif value == 'asset-quality-04' %}
-                                                        {{ asset_1.to_html(classes='table table-bordered table-sm', table_id="dataTablee5",
-                                                    float_format='{:10.2f}'.format, index=False, render_links=True) |
-                                                    safe }}
-
-                                                        {% else %}
-                                                        {{ 'Null'}}
-
-                                                        {% endif %}
+                                                        <table class="table table-bordered table-sm"
+                                                            id="dataTable_diff{{key}}" width="100%" cellspacing="0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col">Evaluation Month</th>
+                                                                    <th scope="col">Prediction Date</th>
+                                                                    <th scope="col">Actual</th>
+                                                                    <th scope="col">Predicetd</th>
+                                                                    <th scope="col">Difference</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for diff in saccos.actual_and_predicted %}
+                                                                {% if diff.performance_criteria == value %}
+                                                                <tr>
+                                                                    <td>{{ diff.month }}</td>
+                                                                    <td>{{ diff.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
+                                                                    </td>
+                                                                    <td>{{ diff.actual }}</td>
+                                                                    <td>{{ diff.predicted }}</td>
+                                                                    <td>{{ "{:.2f}".format(diff.predicted - diff.actual) }}
+                                                                    </td>
+                                                                </tr>
+                                                                {% endif %}
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
                                             </div>
