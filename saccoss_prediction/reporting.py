@@ -198,11 +198,11 @@ def report():
 
         # save the pdf with name .pdf
 
-        response = make_response(pdf.output(
-            evaluation_id+".pdf").encode('latin-1'))
-        response.headers.set('Content-Disposition',
-                             'attachment', filename=evaluation_id + '.pdf')
-        response.headers.set('Content-Type', 'application/pdf')
+        response = make_response(pdf.output(dest='S').encode('latin-1'))
+        response.headers['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+        response.headers['Content-Type'] = 'application/pdf'
+        # response.headers.set('Content-Disposition', 'attachment', filename=evaluation_id + '.pdf')
+        # response.headers.set('Content-Type', 'application/pdf')
         return response
 
         # return send_file('static/reports/'+evaluation_id+".pdf", mimetype='application/pdf', download_name="report.pdf")
