@@ -9,6 +9,7 @@ migrate = Migrate()
 UPLOAD_FOLDER = 'datasets'
 MODELS_FOLDER = 'prediction-models'
 MODELS_PICS_FOLDER = os.path.join('saccoss_prediction/static', 'model-pics')
+REPORTS_FOLDER = os.path.join('saccoss_prediction/static', 'reports')
 
 # This is the first file that get called when a project is runned
 # Very useful when you want to set-up features only once
@@ -22,6 +23,7 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MODELS_FOLDER'] = MODELS_FOLDER
     app.config['MODELS_PICS_FOLDER'] = MODELS_PICS_FOLDER
+    app.config['REPORTS_FOLDER'] = REPORTS_FOLDER
 
     db.init_app(app)
     migrate.init_app(app, db)

@@ -1,4 +1,9 @@
-from flask import Blueprint, request
+from pathlib import Path
+from flask import Blueprint, request, send_file, send_from_directory
+
+from saccoss_prediction import REPORTS_FOLDER
+from saccoss_prediction.models import Evaluations
+from fpdf import FPDF
 
 
 reporting = Blueprint("reporting", __name__)
@@ -48,7 +53,7 @@ def first_section():
         f"zake katika {saccos_residency_title} ya {saccos_residency_name} mkoani {region}, " \
         f"na shughuli za chama hiki kwa ujumla ni pamoja na {services} kwa kuzingatia " \
         f"masharti ya Chama yaliyopitishwa na mkutano mkuu."
-    return heading, main_heading, content
+    return main_heading, heading, content
 
 
 def second_section():
@@ -76,7 +81,7 @@ def second_section():
         "Taarifa ya Malalmiko - Complaint Report",
         "Amana na Mikopo kwenye Benki na taasisi za Fedha - Deposit, Loan in Banks and Financiala Institutions"
     }
-    return heading, main_heading, content, content_list
+    return main_heading, heading, content, content_list
 
 
 def third_section():
@@ -145,6 +150,29 @@ def sevnth_section():
 @reporting.route("/report", methods=['POST'])
 def report():
     evaluation_id = request.form.get('evaluation_id')
-    title = 'Performance Report for {}', format(evaluation_id)
-    print("EVALUET: ", evaluation_id)
-    return evaluation_id
+    if evaluation_id is None:
+        print("No data supplied")
+    else:
+        title = f"Performance Report for {evaluation_id}"
+        evaluation = Evaluations.query.get_or_404(evaluation_id)
+
+        pdf = FPDF()
+
+        # Add a page
+        pdf.add_page()
+
+        # set style and size of font
+        # that you want in the pdf
+        pdf.set_font("Arial", size=15)
+
+       # create a cell
+        pdf.cell(40, 10, txt=report_title(),
+                 ln=1, align='C')
+
+        # add another cell
+        pdf.cell(200, 10, txt=first_section()[0],
+                 ln=2, align='C')
+
+        # save the pdf with name .pdf
+        pdf.output(REPORTS_FOLDER+"/"+evaluation_id+".pdf")
+        return send_file('static/reports/'+evaluation_id+".pdf", mimetype='application/pdf')
