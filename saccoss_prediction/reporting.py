@@ -197,9 +197,9 @@ def report():
                  ln=2, align='C')
 
         # save the pdf with name .pdf
-        # pdf.output(REPORTS_FOLDER+"/"+evaluation_id+".pdf")
 
-        response = make_response(pdf.output(dest='S').encode('latin-1'))
+        response = make_response(pdf.output(
+            evaluation_id+".pdf").encode('latin-1'))
         response.headers.set('Content-Disposition',
                              'attachment', filename=evaluation_id + '.pdf')
         response.headers.set('Content-Type', 'application/pdf')
