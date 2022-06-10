@@ -1,5 +1,5 @@
 from pathlib import Path
-from flask import Blueprint, request, send_file, send_from_directory
+from flask import Blueprint, make_response, request, send_file, send_from_directory
 
 from saccoss_prediction import REPORTS_FOLDER
 from saccoss_prediction.models import Evaluations
@@ -7,6 +7,29 @@ from fpdf import FPDF
 
 
 reporting = Blueprint("reporting", __name__)
+
+
+class PDF(FPDF):
+    def header(self):
+        # Logo
+        self.image(REPORTS_FOLDER+'/header-image.png', 10, 8, 33)
+        # Arial bold 15
+        self.set_font('Arial', 'B', 15)
+        # Move to the right
+        self.cell(80)
+        # Title
+        self.cell(30, 10, 'Title', 1, 0, 'C')
+        # Line break
+        self.ln(20)
+
+    # Page footer
+    def footer(self):
+        # Position at 1.5 cm from bottom
+        self.set_y(-15)
+        # Arial italic 8
+        self.set_font('Arial', 'I', 8)
+        # Page number
+        self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
 
 
 def report_title():
@@ -174,5 +197,13 @@ def report():
                  ln=2, align='C')
 
         # save the pdf with name .pdf
-        pdf.output(REPORTS_FOLDER+"/"+evaluation_id+".pdf")
-        return send_file('static/reports/'+evaluation_id+".pdf", mimetype='application/pdf')
+        # pdf.output(REPORTS_FOLDER+"/"+evaluation_id+".pdf")
+
+        response = make_response(pdf.output(
+            REPORTS_FOLDER+"/"+evaluation_id+".pdf", dest='S').encode('latin-1'))
+        response.headers.set('Content-Disposition',
+                             'attachment', filename=evaluation_id + '.pdf')
+        response.headers.set('Content-Type', 'application/pdf')
+        return response
+
+        # return send_file('static/reports/'+evaluation_id+".pdf", mimetype='application/pdf', download_name="report.pdf")
