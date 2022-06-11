@@ -1,282 +1,530 @@
 {% extends "base.html" %} {% block head %} {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename= 'extended_beauty.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename= 'extended_beauty.css') }}"
+/>
 {% endblock %} {% block content %}
 
 <!---Containerize main page for styling--->
 <div class="page">
-    <!---Containerize paragraph and form for styling--->
-    <div class="container">
+  <!---Containerize paragraph and form for styling--->
+  <div class="container">
+    <div class="alert alert-success" role="alert">
+      <h4>Prediction Area</h4>
+    </div>
 
-        <div class="alert alert-success" role="alert">
-            <h4>Prediction Area</h4>
+    {% if status is defined %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <h4>{{ saccos|upper }} Prediction Results</h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive-sm">
+          <table class="table table-sm">
+            <caption>
+              Prediction Status:
+              <strong>
+                {% if status %} {{ "Success" }} {% else %} {{ "Rejected" }} {%
+                endif %}
+              </strong>
+              <br />
+              Predicted
+              <strong> <em> {{ criteria }} </em> </strong>
+              for
+              <a
+                href="{{ url_for('main.view_saccos', saccos_id=saccos_id) }}"
+                target="_blank"
+              >
+                {{ saccos }}
+              </a>
+              <br />
+              Model used for prediction:
+              <strong>{{ model_used }}</strong>
+              from
+              <a href="https://scikit-learn.org/" target="_blank"
+                >scikit-learn</a
+              ><br />
+              Results:
+              <strong>{{ output }}%</strong
+              ><br />
+              {% if status %} Rating Status:
+              <strong> {{ ratings }} </strong>
+              {% else %} {{ "" }} {% endif %}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">FEATURE</th>
+                <th scope="col">VALUE (TSH.)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if not features %} {% else %} {% for key, value in
+              features.items() %}
+              <tr>
+                <td>{{key}}</td>
+                <td>{{ value }}</td>
+              </tr>
+              {% endfor %} {% endif %}
+            </tbody>
+          </table>
         </div>
+      </div>
+    </div>
+    {% endif %}
 
-        {% if status is defined %}
-        <div class="card mb-3">
-            <div class="card-header">
-                <h4>{{ saccos|upper }} Prediction Results</h4>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive-sm">
-                    <table class="table table-sm">
-                        <caption>
-                            Prediction Status: <strong>{% if status %} {{ "Sucess" }} {% else %} {{ "Rejected" }}
-                                {% endif %}</strong> <br />
-                            Predicted <strong><em>{{ criteria }}</em></strong> for <strong>{{ saccos }}</strong> <br />
-                            Results: <strong>{{ output }}%</strong><br />
-                            Model used for prediction: <strong>{{ model_used }}</strong> from <a
-                                href="https://scikit-learn.org/" target="_blank">scikit-learn</a><br />
-                            {% if status %} Rating Status: <strong> {{ ratings }} </strong> <br /> {% else %} {{ "" }}
-                            {% endif %}
-                            Comments on the results: <strong>{{ message }}</strong>
-                        </caption>
-                        <thead>
-                            <tr>
-                                <th scope="col">FEATURE</th>
-                                <th scope="col">VALUE (TSH.)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if not features %}
-                            {% else %}
-                            {% for key, value in features.items() %}
-                            <tr>
-                                <th scope="row">{{key}}</th>
-                                <td>{{ value }}</td>
-                            </tr>
-                            {% endfor %}
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+    <div class="intro">
+      <b>
+        <p class="Note">
+          <b>Note: Enter values which are reasonable to the context</b>
+        </p>
+      </b>
+    </div>
 
-        <div class="intro">
-            <b>
-                <p class="Note"><b>Note: Enter values which are reasonable to the context</b></p>
-            </b>
-        </div>
+    <!-- Tabs navs -->
+    <ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link active"
+          id="ex1-tab-1"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-1"
+          role="tab"
+          aria-controls="ex1-tabs-1"
+          aria-selected="true"
+          >Capital Adequacy</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link"
+          id="ex1-tab-2"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-2"
+          role="tab"
+          aria-controls="ex1-tabs-2"
+          aria-selected="false"
+          >Asset Quality-01</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link"
+          id="ex1-tab-3"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-3"
+          role="tab"
+          aria-controls="ex1-tabs-3"
+          aria-selected="false"
+          >Asset Quality-02</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link"
+          id="ex1-tab-4"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-4"
+          role="tab"
+          aria-controls="ex1-tabs-4"
+          aria-selected="false"
+          >Asset Quality-03</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link"
+          id="ex1-tab-5"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-5"
+          role="tab"
+          aria-controls="ex1-tabs-5"
+          aria-selected="false"
+          >Asset Quality-04</a
+        >
+      </li>
+    </ul>
+    <!-- Tabs navs -->
 
-        <!-- Tabs navs -->
-        <ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="ex1-tab-1" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-1"
-                    role="tab" aria-controls="ex1-tabs-1" aria-selected="true">Capital Adequacy</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="ex1-tab-2" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-2" role="tab"
-                    aria-controls="ex1-tabs-2" aria-selected="false">Asset Quality-01</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="ex1-tab-3" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-3" role="tab"
-                    aria-controls="ex1-tabs-3" aria-selected="false">Asset Quality-02</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="ex1-tab-4" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-4" role="tab"
-                    aria-controls="ex1-tabs-4" aria-selected="false">Asset Quality-03</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="ex1-tab-5" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-5" role="tab"
-                    aria-controls="ex1-tabs-5" aria-selected="false">Asset Quality-04</a>
-            </li>
-        </ul>
-        <!-- Tabs navs -->
+    <!-- Tabs content -->
+    <div class="tab-content" id="ex1-content">
+      <!-- Capital adequacy start -->
+      <div
+        class="tab-pane fade show active"
+        id="ex1-tabs-1"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-1"
+      >
+        <form action="{{url_for('main.do_predict_post')}}" method="post">
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
+            <select
+              id="saccos-name"
+              name="saccos-id"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+            >
+              <option selected disabled>Open this select menu</option>
+              {% for saccoss in list_of_saccos %}
+              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="input-group mb-3">
+            <input
+              type="number"
+              id="core-capital"
+              name="measure"
+              class="form-control"
+              value="1"
+              style="display: none"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">Core Capital</span>
+            <input
+              type="number"
+              id="core-capital"
+              name="core-capital"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Total Assets</span>
+            <input
+              type="number"
+              id="total-assets"
+              name="total-assets"
+              class="form-control"
+              aria-label="Amount (to the nearest dollar)"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary btn-block">
+            Predict
+          </button>
+        </form>
+      </div>
+      <!-- Capital adequacy end -->
 
-        <!-- Tabs content -->
-        <div class="tab-content" id="ex1-content">
+      <!-- Asset quality 01 start -->
+      <div
+        class="tab-pane fade"
+        id="ex1-tabs-2"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-2"
+      >
+        <form action="{{url_for('main.do_predict_post')}}" method="post">
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
+            <select
+              id="saccos-name"
+              name="saccos-id"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+            >
+              <option selected disabled>Open this select menu</option>
+              {% for saccoss in list_of_saccos %}
+              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="input-group mb-3">
+            <input
+              type="number"
+              id="core-capital"
+              name="measure"
+              class="form-control"
+              value="2"
+              style="display: none"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3"
+              >Non-performing loans</span
+            >
+            <input
+              type="number"
+              id="core-capital"
+              name="core-capital"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text"
+              >Gross Loan Portifolio/Total loans</span
+            >
+            <input
+              type="number"
+              id="total-assets"
+              name="total-assets"
+              class="form-control"
+              aria-label="Amount (to the nearest dollar)"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary btn-block">
+            Predict
+          </button>
+        </form>
+      </div>
+      <!-- Asset quality 01 end -->
 
-            <!-- Capital adequacy start -->
-            <div class="tab-pane fade show active" id="ex1-tabs-1" role="tabpanel" aria-labelledby="ex1-tab-1">
-                <form action="{{url_for('main.do_predict_post')}}" method="post">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
-                        <select id="saccos-name" name="saccos-id" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required">
-                            <option selected disabled>Open this select menu</option>
-                            {% for saccoss in list_of_saccos %}
-                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="core-capital" name="measure" class="form-control" value="1"
-                            style="display: none;">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">Core Capital</span>
-                        <input type="number" id="core-capital" name="core-capital" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required" step=".01">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Total Assets</span>
-                        <input type="number" id="total-assets" name="total-assets" class="form-control"
-                            aria-label="Amount (to the nearest dollar)" required="required" step=".01">
-                    </div>
-                    <!-- Submit button -->
-                    <button type="submit" class="btn btn-primary btn-block">Predict</button>
-                </form>
-            </div>
-            <!-- Capital adequacy end -->
+      <!-- Asset quality 02 start -->
+      <div
+        class="tab-pane fade"
+        id="ex1-tabs-3"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-2"
+      >
+        <form action="{{url_for('main.do_predict_post')}}" method="post">
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
+            <select
+              id="saccos-name"
+              name="saccos-id"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+            >
+              <option selected disabled>Open this select menu</option>
+              {% for saccoss in list_of_saccos %}
+              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="input-group mb-3">
+            <input
+              type="number"
+              id="core-capital"
+              name="measure"
+              class="form-control"
+              value="3"
+              style="display: none"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3"
+              >Non-earning assets</span
+            >
+            <input
+              type="number"
+              id="core-capital"
+              name="core-capital"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Total assets</span>
+            <input
+              type="number"
+              id="total-assets"
+              name="total-assets"
+              class="form-control"
+              aria-label="Amount (to the nearest dollar)"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary btn-block">
+            Predict
+          </button>
+        </form>
+      </div>
+      <!-- Asset quality 02 end -->
 
-            <!-- Asset quality 01 start -->
-            <div class="tab-pane fade" id="ex1-tabs-2" role="tabpanel" aria-labelledby="ex1-tab-2">
-                <form action="{{url_for('main.do_predict_post')}}" method="post">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
-                        <select id="saccos-name" name="saccos-id" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required">
-                            <option selected disabled>Open this select menu</option>
-                            {% for saccoss in list_of_saccos %}
-                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="core-capital" name="measure" class="form-control" value="2"
-                            style="display: none;">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">Non-performing loans</span>
-                        <input type="number" id="core-capital" name="core-capital" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required" step=".01">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Gross Loan Portifolio/Total loans</span>
-                        <input type="number" id="total-assets" name="total-assets" class="form-control"
-                            aria-label="Amount (to the nearest dollar)" required="required" step=".01">
-                    </div>
-                    <!-- Submit button -->
-                    <button type="submit" class="btn btn-primary btn-block">Predict</button>
-                </form>
-            </div>
-            <!-- Asset quality 01 end -->
+      <!-- Asset quality 03 start -->
+      <div
+        class="tab-pane fade"
+        id="ex1-tabs-4"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-2"
+      >
+        <form action="{{url_for('main.do_predict_post')}}" method="post">
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
+            <select
+              id="saccos-name"
+              name="saccos-id"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+            >
+              <option selected disabled>Open this select menu</option>
+              {% for saccoss in list_of_saccos %}
+              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="input-group mb-3">
+            <input
+              type="number"
+              id="core-capital"
+              name="measure"
+              class="form-control"
+              value="4"
+              style="display: none"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3"
+              >General loan loss reserve</span
+            >
+            <input
+              type="number"
+              id="core-capital"
+              name="core-capital"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Gross loans</span>
+            <input
+              type="number"
+              id="total-assets"
+              name="total-assets"
+              class="form-control"
+              aria-label="Amount (to the nearest dollar)"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            Predict
+          </button>
+        </form>
+      </div>
+      <!-- Asset quality 03 end -->
 
-            <!-- Asset quality 02 start -->
-            <div class="tab-pane fade" id="ex1-tabs-3" role="tabpanel" aria-labelledby="ex1-tab-2">
-                <form action="{{url_for('main.do_predict_post')}}" method="post">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
-                        <select id="saccos-name" name="saccos-id" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required">
-                            <option selected disabled>Open this select menu</option>
-                            {% for saccoss in list_of_saccos %}
-                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="core-capital" name="measure" class="form-control" value="3"
-                            style="display: none;">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">Non-earning assets</span>
-                        <input type="number" id="core-capital" name="core-capital" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required" step=".01">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Total assets</span>
-                        <input type="number" id="total-assets" name="total-assets" class="form-control"
-                            aria-label="Amount (to the nearest dollar)" required="required" step=".01">
-                    </div>
-                    <!-- Submit button -->
-                    <button type="submit" class="btn btn-primary btn-block">Predict</button>
-                </form>
-            </div>
-            <!-- Asset quality 02 end -->
+      <!-- Asset quality 04 start -->
+      <div
+        class="tab-pane fade"
+        id="ex1-tabs-5"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-2"
+      >
+        <form action="{{url_for('main.do_predict_post')}}" method="post">
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
+            <select
+              id="saccos-name"
+              name="saccos-id"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+            >
+              <option selected disabled>Open this select menu</option>
+              {% for saccoss in list_of_saccos %}
+              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="input-group mb-3">
+            <input
+              type="number"
+              id="core-capital"
+              name="measure"
+              class="form-control"
+              value="5"
+              style="display: none"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon3">Write-offs</span>
+            <input
+              type="number"
+              id="core-capital"
+              name="core-capital"
+              class="form-control"
+              id="basic-url"
+              aria-describedby="basic-addon3"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Recoveries</span>
+            <input
+              type="number"
+              id="total-assets"
+              name="total-assets"
+              class="form-control"
+              aria-label="Amount (to the nearest dollar)"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Total loans</span>
+            <input
+              type="number"
+              id="total-loans"
+              name="total-loans"
+              class="form-control"
+              aria-label="Amount (to the nearest dollar)"
+              required="required"
+              step=".01"
+            />
+          </div>
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary btn-block">
+            Predict
+          </button>
+        </form>
+      </div>
+      <!-- Asset quality 04 end -->
+    </div>
+    <!-- Tabs content end-->
 
-            <!-- Asset quality 03 start -->
-            <div class="tab-pane fade" id="ex1-tabs-4" role="tabpanel" aria-labelledby="ex1-tab-2">
-                <form action="{{url_for('main.do_predict_post')}}" method="post">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
-                        <select id="saccos-name" name="saccos-id" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required">
-                            <option selected disabled>Open this select menu</option>
-                            {% for saccoss in list_of_saccos %}
-                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="core-capital" name="measure" class="form-control" value="4"
-                            style="display: none;">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">General loan loss reserve</span>
-                        <input type="number" id="core-capital" name="core-capital" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required" step=".01">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Gross loans</span>
-                        <input type="number" id="total-assets" name="total-assets" class="form-control"
-                            aria-label="Amount (to the nearest dollar)" required="required" step=".01">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Predict</button>
-                </form>
-            </div>
-            <!-- Asset quality 03 end -->
+    <br />
+    <br />
+    <!---Set placeholder for prediction output--->
+    {% if prediction_text is defined %}
+    <div class="pred">
+      <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Success!</h4>
+        <hr />
+        <p class="mb-0 result">
+          <strong>Results: </strong>
+          {{ prediction_text }}
+        </p>
+      </div>
+    </div>
+    {% else %} {% endif %}
 
-            <!-- Asset quality 04 start -->
-            <div class="tab-pane fade" id="ex1-tabs-5" role="tabpanel" aria-labelledby="ex1-tab-2">
-                <form action="{{url_for('main.do_predict_post')}}" method="post">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">SACCOS Name</span>
-                        <select id="saccos-name" name="saccos-id" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required">
-                            <option selected disabled>Open this select menu</option>
-                            {% for saccoss in list_of_saccos %}
-                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="number" id="core-capital" name="measure" class="form-control" value="5"
-                            style="display: none;">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon3">Write-offs</span>
-                        <input type="number" id="core-capital" name="core-capital" class="form-control" id="basic-url"
-                            aria-describedby="basic-addon3" required="required" step=".01">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Recoveries</span>
-                        <input type="number" id="total-assets" name="total-assets" class="form-control"
-                            aria-label="Amount (to the nearest dollar)" required="required" step=".01">
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Total loans</span>
-                        <input type="number" id="total-loans" name="total-loans" class="form-control"
-                            aria-label="Amount (to the nearest dollar)" required="required" step=".01">
-                    </div>
-                    <!-- Submit button -->
-                    <button type="submit" class="btn btn-primary btn-block">Predict</button>
-                </form>
-            </div>
-            <!-- Asset quality 04 end -->
-
-        </div>
-        <!-- Tabs content end-->
-
-        <br>
-        <br>
-        <!---Set placeholder for prediction output--->
-        {% if prediction_text is defined %}
-        <div class="pred">
-            <div class="alert alert-success" role="alert">
-                <h4 class="alert-heading">Success!</h4>
-                <hr>
-                <p class="mb-0 result"><strong>Results: </strong>
-                    {{ prediction_text }}
-                </p>
-            </div>
-        </div>
-        {% else %}
-        {% endif %}
-
-
-        <!-- {% if texts is defined %}
+    <!-- {% if texts is defined %}
         {% for text in texts %}
         <div>{{ error }}</div>
         <div class="post">
@@ -287,11 +535,8 @@
         {% else %}
         Error!
         {% endif %} -->
-
-
-    </div>
+  </div>
 </div>
 <!-- </center> -->
-
 
 {% endblock %}

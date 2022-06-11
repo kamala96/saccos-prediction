@@ -206,6 +206,28 @@ def do_predict():
     )
 
 
+def abbrev_to_length(key_word):
+    if key_word == 'OP':
+        result = 'Outstanding Performance'
+
+    elif key_word == 'SP':
+        result = 'Superior Performance'
+
+    elif key_word == 'AP':
+        result = 'Avarage Performance'
+
+    elif key_word == 'UP':
+        result = 'Under Performance'
+
+    elif key_word == 'DP':
+        result = 'Doubtful Performance'
+
+    else:
+        pass
+
+    return result
+
+
 @main.route('/predict', methods=['POST'])
 # @login_required
 def do_predict_post():
@@ -251,39 +273,44 @@ def do_predict_post():
 
         # If the output is negative, the values entered are unreasonable to the context of the application
         # If the output is greater than 0, return prediction
-        if output <= 0:
-            message = 'May be the values entered are not reasonable to the context'
-        else:
-            message = 'Prediction is greatly reasonable'
+        # if output <= 0:
+        #     message = 'May be the values entered are not reasonable to the context'
+        # else:
+        #     message = 'Prediction is greatly reasonable'
 
     title = 'SEPS - Predicting ' + str(criteria) + ' for ' + saccos
 
     if performance_metric == 1:
         ratings = capital_adequacy_rating(float(output))
+        ratings = abbrev_to_length(ratings)
         features = {
             'Core Capital': int_features[0],
             'Total Assets': int_features[1]
         }
     elif performance_metric == 2:
         ratings = asset_quality_01_rating(float(output))
+        ratings = abbrev_to_length(ratings)
         features = {
             'Non-performing loans': int_features[0],
             'Gross Loan Portifolio/Total loans': int_features[1]
         }
     elif performance_metric == 3:
         ratings = asset_quality_02_rating(float(output))
+        ratings = abbrev_to_length(ratings)
         features = {
             'Non-earning assets': int_features[0],
             'Total assets': int_features[1]
         }
     elif performance_metric == 4:
         ratings = asset_quality_03_rating(float(output))
+        ratings = abbrev_to_length(ratings)
         features = {
             'General loan loss reserve': int_features[0],
             'Gross loans': int_features[1]
         }
     elif performance_metric == 5:
         ratings = asset_quality_04_rating(float(output))
+        ratings = abbrev_to_length(ratings)
         features = {
             'Write-offs': int_features[0],
             'Recoveries': int_features[1],
@@ -302,6 +329,7 @@ def do_predict_post():
         message=message,
         model_used=model_used,
         saccos=saccos,
+        saccos_id=saccos_id,
         ratings=ratings,
         output=output
     )
