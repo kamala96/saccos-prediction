@@ -1,65 +1,91 @@
 {% extends "base.html" %} {% block head %} {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename= 'extended_beauty.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename= 'extended_beauty.css') }}"
+/>
 {% endblock %} {% block content %}
 
 <!---Containerize main page for styling--->
 <div class="page">
-    <!---Containerize paragraph and form for styling--->
-    <div class="container">
+  <!---Containerize paragraph and form for styling--->
+  <div class="container">
+    <div class="alert alert-success" role="alert">
+      <h4>Models Generation Area</h4>
+    </div>
 
-        <div class="alert alert-success" role="alert">
-            <h4>Models Generation Area</h4>
-        </div>
+    <div class="intro">
+      <b>
+        <p class="Note">
+          <b>Note: Enter a dataset which is reasonable to the context</b>
+        </p>
+      </b>
+    </div>
 
-        <div class="intro">
-            <b>
-                <p class="Note"><b>Note: Enter a dataset which is reasonable to the context</b></p>
-            </b>
-        </div>
+    <div class="card mb-2">
+      <div class="card-body">
+        {% with messages = get_flashed_messages() %} {% if messages %}
+        <div class="alert alert-primary" role="alert">{{ messages[0] }}</div>
+        {% endif %} {% endwith %}
 
-        <div class="card mb-2">
-            <div class="card-body">
-                {% with messages = get_flashed_messages() %} {% if messages %}
-                <div class="alert alert-primary" role="alert">
-                    {{ messages[0] }}
-                </div>
-                {% endif %} {% endwith %}
-
-                <form action="{{url_for('generate_model.generate')}}" method="post" enctype="multipart/form-data">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">Inputs</span>
-                        <select id="saccos" name="saccos-name" class="form-control" id="saccos"
-                            aria-describedby="saccos" required>
-                            <option selected disabled>Select SACCOS</option>
-                            {% for saccoss in list_of_saccos %}
-                            <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <input type="file" aria-label="Dataset" name="file" class="form-control" required>
-                        <button class="btn btn-primary" type="submit">Generate</button>
-                    </div>
-                </form>
+        <form
+          action="{{url_for('generate_model.generate')}}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="inputGroupSelect01">
+                Model Inputs
+              </label>
             </div>
-        </div>
-
-        <br>
-        <br>
-        <!---Set placeholder for prediction output--->
-        {% if prediction_text is defined %}
-        <div class="pred">
-            <div class="alert alert-success" role="alert">
-                <h4 class="alert-heading">Success!</h4>
-                <hr>
-                <p class="mb-0 result"><strong>Results: </strong>
-                    {{ prediction_text }}
-                </p>
+            <select
+              class="custom-select"
+              id="inputGroupSelect01"
+              name="saccos-name"
+              required
+            >
+              <option selected>Choose SACCOS...</option>
+              {% for saccoss in list_of_saccos %}
+              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="custom-file">
+              <input
+                type="file"
+                class="custom-file-input"
+                name="file"
+                id="inputGroupFile01"
+                required
+              />
+              <label class="custom-file-label" for="inputGroupFile01"
+                >Choose data (csv file)...</label
+              >
             </div>
-        </div>
-        {% else %}
-        {% endif %}
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="submit">Re-Generate</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
+    <br />
+    <br />
+    <!---Set placeholder for prediction output--->
+    {% if prediction_text is defined %}
+    <div class="pred">
+      <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Success!</h4>
+        <hr />
+        <p class="mb-0 result">
+          <strong>Results: </strong>
+          {{ prediction_text }}
+        </p>
+      </div>
+    </div>
+    {% else %} {% endif %}
 
-        <!-- {% if texts is defined %}
+    <!-- {% if texts is defined %}
         {% for text in texts %}
         <div>{{ error }}</div>
         <div class="post">
@@ -70,11 +96,8 @@
         {% else %}
         Error!
         {% endif %} -->
-
-
-    </div>
+  </div>
 </div>
 <!-- </center> -->
-
 
 {% endblock %}
