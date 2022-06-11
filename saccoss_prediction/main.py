@@ -1,12 +1,13 @@
 # This file will handle CRUD operations
 
+import sys
 from matplotlib.pyplot import title
 import numpy as np
 from sqlalchemy import false
 from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
 from .models import PredictionModels, User, Saccos
 from .models import Workout
-from flask import Blueprint, flash, redirect, render_template, url_for, request
+from flask import Blueprint, flash, redirect, render_template, url_for, request, Markup
 from flask_login import current_user, login_required
 from joblib import dump, load
 from .generate_model import OUTCOME_NAMES, asset_quality_01_rating, asset_quality_02_rating, asset_quality_03_rating, asset_quality_04_rating, capital_adequacy_rating
@@ -100,48 +101,81 @@ def add_saccos():
     saccoss = request.form.get('saccoss')
     saccoss = saccoss.replace(" ", "-")
 
-    exists = Saccos.query.filter_by(name=saccoss).first()
-
-    if exists:
-        flash('Already exists')
+    try:
+        exists = Saccos.query.filter_by(name=saccoss).first()
+        if exists:
+            flash('Already exists', 'warning')
+            return redirect(url_for('main.index'))
+    except:
+        flash('Oops!, internal server error', 'danger')
         return redirect(url_for('main.index'))
 
     new_saccos = Saccos(name=saccoss)
-    db.session.add(new_saccos)
-    db.session.commit()
-    flash('Your request has been received successfuly!')
-
+    try:
+        db.session.add(new_saccos)
+        db.session.commit()
+        flash('Your request has been received successfuly!', 'success')
+    except:
+        flash('Oops!, internal server error', 'danger')
     return redirect(url_for('main.index'))
 
 
 @main.route("/saccos/<int:saccos_id>/delete", methods=['GET', 'POST'])
 def delete_saccos(saccos_id):
-    saccos = Saccos.query.get_or_404(saccos_id)
-    db.session.delete(saccos)
-    db.session.commit()
-    flash('Your post has been deleted!')
+    try:
+        saccos = Saccos.query.get_or_404(saccos_id)
+    except:
+        flash('No such saccos!', 'info')
+        return redirect(url_for('main.index'))
+
+    try:
+        db.session.delete(saccos)
+        db.session.commit()
+        flash('Your post has been deleted!', 'success')
+    except:
+        flash('Oops!, internal server error', 'danger')
     return redirect(url_for('main.index'))
 
 
 @main.route("/saccos/<int:saccos_id>", methods=['GET'])
 def view_saccos(saccos_id):
     # saccos = Saccos.query.get_or_404(saccos_id)
-    saccos = Saccos.query.filter_by(id=saccos_id).first_or_404()
+    try:
+        saccos = Saccos.query.filter_by(id=saccos_id).first_or_404()
+    except:
+        flash('No such saccos!', 'info')
+        return redirect(url_for('main.index'))
+
     filename = saccos.name.lower()
     filename = filename.replace(" ", "_")
     filename = filename+'.csv'
-    clean_sample = pd.read_csv(
-        UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
-    capital = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                          saccos.name.lower()+"/capital-adequacy.csv", sep='\t')
-    asset_1 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                          saccos.name.lower()+"/asset-quality-01.csv", sep='\t')
-    asset_2 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                          saccos.name.lower()+"/asset-quality-02.csv", sep='\t')
-    asset_3 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                          saccos.name.lower()+"/asset-quality-03.csv", sep='\t')
-    asset_4 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                          saccos.name.lower()+"/asset-quality-04.csv", sep='\t')
+
+    try:
+        clean_sample = pd.read_csv(
+            UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
+        capital = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                              saccos.name.lower()+"/capital-adequacy.csv", sep='\t')
+        asset_1 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                              saccos.name.lower()+"/asset-quality-01.csv", sep='\t')
+        asset_2 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                              saccos.name.lower()+"/asset-quality-02.csv", sep='\t')
+        asset_3 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                              saccos.name.lower()+"/asset-quality-03.csv", sep='\t')
+        asset_4 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
+                              saccos.name.lower()+"/asset-quality-04.csv", sep='\t')
+    except FileNotFoundError:
+        flash('Oops!, please generate model for this saccoss', 'warning')
+        return redirect(url_for('main.index'))
+    except pd.errors.EmptyDataError:
+        flash(message='Oops!, some important files has no data', category='danger')
+        return redirect(url_for('main.index'))
+    except pd.errors.ParserError:
+        flash(message='Oops!, parser error', category='danger')
+        return redirect(url_for('main.index'))
+    except Exception as e:
+        flash(message=e, category='danger')
+        return redirect(url_for('main.index'))
+
     title = 'SEPS - ' + saccos.name
     # model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
     # print(clean_sample.to_html())
@@ -157,14 +191,15 @@ def get_model(saccos_id: int, performance: int):
     '''
     This function manages a retrieval of model files.
     '''
-    saccos_data = Saccos.query.get_or_404(saccos_id)
+    try:
+        saccos_data = Saccos.query.get_or_404(saccos_id)
+    except:
+        flash('No such saccos!', 'info')
+        return redirect(url_for('main.do_predict'))
+
     saccos_name = str(saccos_data.name.lower())
     sub_path = str(OUTCOME_NAMES.get(performance))
     base_path = MODELS_FOLDER+"/"+saccos_name+"/"+sub_path+'.joblib'
-
-    # with open(base_path, 'rb') as file:
-    #         joblib_model = load(file)
-    # return joblib_model
 
     try:
         with open(base_path, 'rb') as file:
@@ -172,6 +207,15 @@ def get_model(saccos_id: int, performance: int):
         return joblib_model
     except:
         return False
+
+    # try:
+    #     with open(base_path, 'rb') as file:
+    #         joblib_model = load(file)
+    #     return joblib_model
+    # except:
+    #     flash(Markup('Oops!, this saccos has not yet implementated. Please visit <a href="' + url_for('generate_model.generate') +
+    #           '" class="alert-link"> here </a> to generate its implementations'), 'info')
+    #     return redirect(url_for('main.do_predict'))
 
     # if performance == 1:
     #     # Capital adequacy
@@ -194,10 +238,15 @@ def get_model(saccos_id: int, performance: int):
     #     return False
 
 
-@main.route('/predict')
+@main.route('/prediction')
 # @login_required
 def do_predict():
-    list_of_saccos = Saccos.query.all()
+    try:
+        list_of_saccos = Saccos.query.all()
+    except:
+        flash('Internal server error', 'info')
+        return redirect(url_for(request.url))
+
     title = 'SEPS - Prediction Page'
     return render_template(
         'do_predict.html',
@@ -261,7 +310,9 @@ def do_predict_post():
 
     if(model == False):
         status = False
-        message = "The selection has not yet implemented"
+        flash(Markup('Oops!, this saccos has not yet been implemented. Please visit <a href="' + url_for('generate_model.generate') +
+                     '" class="alert-link"> here </a> to generate its implementations'), 'info')
+        return redirect(url_for('main.do_predict'))
     else:
         # predict the price given the values inputted by user
         prediction = model.predict(final_features)

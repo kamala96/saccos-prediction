@@ -13,7 +13,11 @@
       <h4>Prediction Area</h4>
     </div>
 
-    {% if status is defined %}
+    {% with messages = get_flashed_messages(with_categories=True) %} {% if
+    messages %} {% for category, message in messages %}
+    <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+    {% endfor %} {% endif %} {% endwith %} {% if status is defined %}
+
     <div class="card mb-3">
       <div class="card-header">
         <h4>{{ saccos|upper }} Prediction Results</h4>

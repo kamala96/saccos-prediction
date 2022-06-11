@@ -1,7 +1,7 @@
 import numbers
 import os
 from pathlib import Path
-from flask import Blueprint, flash, render_template, url_for, request, redirect
+from flask import Blueprint, flash, render_template, url_for, request, redirect, Markup
 from joblib import dump
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
@@ -48,7 +48,12 @@ def renamed_file_name(saccos_name):
 
 
 def read_data(file_name, saccos_id):
-    file_data = pd.read_csv(UPLOAD_FOLDER + "/" + saccos_id + "/" + file_name)
+    try:
+        file_data = pd.read_csv(UPLOAD_FOLDER + "/" +
+                                saccos_id + "/" + file_name)
+    except:
+        flash('No file found', 'danger')
+        return redirect(url_for('generate_model.generate'))
     return file_data
 
 
@@ -447,22 +452,26 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
 def generate():
     title = 'SEPS - Model Generation Page'
     list_of_saccos = Saccos.query.all()
-    if request.method == 'POST':
 
+    if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
-            flash('No file part')
+            flash('No file part', 'warning')
             return redirect(request.url)
 
         saccos_id = int(request.form.get('saccos-name'))
-        full_saccos = Saccos.query.get_or_404(saccos_id)
+        try:
+            full_saccos = Saccos.query.get_or_404(saccos_id)
+        except:
+            flash('No such saccoss', 'info')
+            return redirect(request.url)
 
         # outcome = int(request.form.get('outcome'))
         file = request.files['file']
 
         # If the user does not select a file.
         if file.filename == '':
-            flash('No selected file')
+            flash('No selected file', 'warning')
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
@@ -528,8 +537,12 @@ def generate():
                 data_rows.append(my_row)
 
             # save our data
-            db.session.add_all(data_rows)
-            db.session.commit()
+            try:
+                db.session.add_all(data_rows)
+                db.session.commit()
+            except:
+                flash('Internal server error', 'danger')
+                return redirect(request.url)
 
             x_y_splits_1 = define_x_y(data, OUTCOME_NAMES.get(1))
             x_y_splits_2 = define_x_y(data, OUTCOME_NAMES.get(2))
@@ -672,10 +685,12 @@ def generate():
             # db.session.commit()
 
             # cross_val_score(LinearRegression(), X, y)
-            flash('Re-generation successed for '+full_saccos.name +
-                  '. Please tap Home button above to view the generation summaries', category="info")
+            flash(Markup('Re-generation successed for '+full_saccos.name +
+                  '. Please visit <a href="' + url_for('main.view_saccos', saccos_id=saccos_id) + '" class="alert-link"> here </a> for the detailed generation info'), category="success")
             # return str(score_1)
             return redirect(url_for('generate_model.generate'))
+        else:
+            flash("Please select the valid file format", "danger")
     return render_template(
         'generate_models.html', title=title,
         list_of_saccos=list_of_saccos

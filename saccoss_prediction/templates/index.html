@@ -11,11 +11,15 @@
             <h4>AVAILABLE SACCOS</h4>
         </div>
 
-        {% with messages = get_flashed_messages() %} {% if messages %}
-        <div class="notification text-danger">
-            {{ messages[0] }}
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">
+            {{ message }}
         </div>
-        {% endif %} {% endwith %}
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
 
         <!-- Form Start -->
         <div class="collapse mb-2" id="addSaccossCollapse">
@@ -55,9 +59,10 @@
         <div class="card-body">
             <!-- <?php if(! empty($intermediaries)): ?> -->
             <div class="table-responsive">
-                <table class="table table-bordered table-sm" id="dataTable" width="100%" cellspacing="0">
+                <table class="table table-sm" id="dataTable">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Name</th>
                             <th>Date Created</th>
                             <th>Action</th>
@@ -66,6 +71,7 @@
                     <tbody>
                         {% for saccoss in list_of_saccos %}
                         <tr>
+                            <td> {{ loop.index }} </td>
                             <td> {{ saccoss.name }} </td>
                             <td>{{ saccoss.date_created.strftime('%Y-%m-%d') }}</td>
                             <td>
