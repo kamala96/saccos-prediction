@@ -164,7 +164,7 @@ def view_saccos(saccos_id):
         asset_4 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
                               saccos.name.lower()+"/asset-quality-04.csv", sep='\t')
     except FileNotFoundError:
-        flash(Markup('Oops!, please visit <a href="' + url_for('generate_model.generate') +
+        flash(Markup('You are not done yet, please visit <a href="' + url_for('generate_model.generate') +
                      '" class="alert-link"> here </a> generate model for this saccoss'), 'info')
         return redirect(url_for('main.index'))
     except pd.errors.EmptyDataError:
