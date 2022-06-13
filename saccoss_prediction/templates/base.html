@@ -1,89 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    {% block head %}
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename= 'images/muscle.ico') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Arvo&display=swap"
+      rel="stylesheet"
+    />
 
-<head>
-  {% block head %}
-  <title> {{ title }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename= 'images/muscle.ico') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Arvo&display=swap" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename= 'beauty.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename= 'beauty.css') }}" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename= 'dataTables.bootstrap4.css') }}"
+    />
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename= 'jquery.dataTables.min.css') }}" /> -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename= 'buttons.dataTables.min.css') }}"
+    />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename= 'dataTables.bootstrap4.css') }}" />
-  <!-- <link rel="stylesheet" href="{{ url_for('static', filename= 'jquery.dataTables.min.css') }}" /> -->
-  <link rel="stylesheet" href="{{ url_for('static', filename= 'buttons.dataTables.min.css') }}" />
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
+    <script src="{{ url_for('static', filename= 'jquery-3.5.1.js') }}"></script>
 
-  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
-  <script src="{{ url_for('static', filename= 'jquery-3.5.1.js') }}"></script>
-
-  <!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    <!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
     integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
   </script> -->
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
-  </script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+      crossorigin="anonymous"
+    ></script>
 
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
-  </script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
 
-  <!-- Data table entry -->
-  <script src="{{ url_for('static', filename= 'dataTables.min.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'dataTables.bootstrap4.min.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'datatables-demo.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'dataTables.buttons.min.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'jszip.min.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'pdfmake.min.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'vfs_fonts.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'buttons.html5.min.js') }}"></script>
-  <script src="{{ url_for('static', filename= 'buttons.print.min.js') }}"></script>
-  {% endblock %}
-</head>
+    <!-- Data table entry -->
+    <script src="{{ url_for('static', filename= 'dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'datatables-demo.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'dataTables.buttons.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'jszip.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'pdfmake.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'vfs_fonts.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'buttons.html5.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'buttons.print.min.js') }}"></script>
+    {% endblock %}
+  </head>
 
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light container">
-    <a class="navbar-brand" href="{{ url_for('main.index') }}">
-      <h3>Saccos Evaluation and Prediction System </h3>
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light container">
+      <a class="navbar-brand" href="{{ url_for('main.index') }}">
+        <h3>Saccos Evaluation and Prediction System</h3>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <ul class="navbar-nav mr-auto">
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a
+              href="{{ url_for('main.index') }}"
+              class="btn btn-outline-secondary"
+              role="button"
+              aria-pressed="true"
+              >Home</a
+            >
+          </li>
 
-      <li class="nav-item active">
-        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary" role="button"
-          aria-pressed="true">Home</a>
-      </li>
+          <li class="nav-item">
+            <a
+              href="{{ url_for('generate_model.generate') }}"
+              class="btn btn-outline-secondary mx-sm-1"
+              role="button"
+              >Re-Generate Models</a
+            >
+          </li>
 
-      <li class="nav-item">
-        <a href="{{ url_for('generate_model.generate') }}" class="btn btn-outline-secondary mx-sm-1"
-          role="button">Re-Generate
-          Models</a>
-      </li>
+          <li class="nav-item">
+            <a
+              href="{{ url_for('main.do_predict') }}"
+              class="btn btn-outline-secondary mx-sm-1"
+              role="button"
+              >Predict</a
+            >
+          </li>
 
-      <li class="nav-item">
-        <a href="{{ url_for('main.do_predict') }}" class="btn btn-outline-secondary mx-sm-1" role="button">Predict</a>
-      </li>
-
-      <!-- <li class="nav-item active">
+          <!-- <li class="nav-item active">
           <a href="{{ url_for('main.user_workouts') }}" class="btn btn-outline-secondary" role="button">All Workouts</a>
         </li>
         <li class="nav-item">
           <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary" role="button"
             style="margin-left: 4px;">Account</a>
         </li> -->
-    </ul>
-    <!-- <form class="form-inline my-2 my-lg-0"> -->
-    <!-- {% if current_user.is_authenticated %} -->
-    <!-- <a href="{{ url_for('main.new_workout') }}" class="btn btn-outline-primary" role="button">Add New Workout</a> -->
-    <!-- <a href="{{ url_for('main.do_predict') }}" class="btn btn-outline-primary" role="button">Predict</a> -->
-    <!-- {% endif %} {% if not current_user.is_authenticated %}
+        </ul>
+        <!-- <form class="form-inline my-2 my-lg-0"> -->
+        <!-- {% if current_user.is_authenticated %} -->
+        <!-- <a href="{{ url_for('main.new_workout') }}" class="btn btn-outline-primary" role="button">Add New Workout</a> -->
+        <!-- <a href="{{ url_for('main.do_predict') }}" class="btn btn-outline-primary" role="button">Predict</a> -->
+        <!-- {% endif %} {% if not current_user.is_authenticated %}
         <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary" role="button">Signup</a>
         <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary" role="button"
           style="margin-left: 4px;">Login</a>
@@ -91,10 +134,9 @@
         <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger" role="button"
           style="margin-left: 4px;">Log Out</a>
         {% endif %} -->
-    <!-- </form> -->
-    </div>
-  </nav>
-  {% block content %} {% endblock %}
-</body>
-
+        <!-- </form> -->
+      </div>
+    </nav>
+    {% block content %} {% endblock %}
+  </body>
 </html>
