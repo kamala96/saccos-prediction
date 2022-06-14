@@ -16,12 +16,13 @@
     <div class="intro">
       <b>
         <p class="Note">
-          <b>Note: Enter a dataset which is reasonable to the context</b>
+          <b>Note: Choose a dataset that is reasonable to the context</b>
         </p>
       </b>
     </div>
 
     <div class="card mb-2">
+      <div class="card-header container-fluid">Model Inputs</div>
       <div class="card-body">
         {% with messages = get_flashed_messages(with_categories=True) %} {% if
         messages %} {% for category, message in messages %}
@@ -36,7 +37,7 @@
           <div class="input-group mb-3">
             <div class="input-group-prepend">
               <label class="input-group-text" for="inputGroupSelect01">
-                Model Inputs
+                @
               </label>
             </div>
             <select
