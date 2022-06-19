@@ -9,9 +9,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sqlalchemy import null
 from werkzeug.utils import secure_filename
-from .models import ActualAndPredicted, Evaluations, Saccos, PredictionModels
+from .models import ActualAndPredicted, Evaluations, FeatureImportances, Saccos, PredictionModels
 from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
 
 import numpy as np
@@ -280,24 +279,24 @@ def further_preprocessing(data):
 def define_x_y(data, y_column):
     if y_column == OUTCOME_NAMES.get(1):
         #         x = data_df.drop(['PE'], axis=1).values
-        x = data[[RENAME_COLUMN["CC"], RENAME_COLUMN["TA"]]].values
+        x = data[[RENAME_COLUMN["CC"], RENAME_COLUMN["TA"]]]
         y = data[y_column]
         return x, y
     elif y_column == OUTCOME_NAMES.get(2):
-        x = data[[RENAME_COLUMN["NPL"], RENAME_COLUMN["GLP-TL"]]].values
+        x = data[[RENAME_COLUMN["NPL"], RENAME_COLUMN["GLP-TL"]]]
         y = data[y_column]
         return x, y
     elif y_column == OUTCOME_NAMES.get(3):
-        x = data[[RENAME_COLUMN["NEA"], RENAME_COLUMN["TA"]]].values
+        x = data[[RENAME_COLUMN["NEA"], RENAME_COLUMN["TA"]]]
         y = data[y_column]
         return x, y
     elif y_column == OUTCOME_NAMES.get(4):
-        x = data[[RENAME_COLUMN["GLLR"], RENAME_COLUMN["GL"]]].values
+        x = data[[RENAME_COLUMN["GLLR"], RENAME_COLUMN["GL"]]]
         y = data[y_column]
         return x, y
     elif y_column == OUTCOME_NAMES.get(5):
         x = data[[RENAME_COLUMN["WO"], RENAME_COLUMN["RCV"],
-                  RENAME_COLUMN["GLP-TL"]]].values
+                  RENAME_COLUMN["GLP-TL"]]]
         y = data[y_column]
         return x, y
     else:
@@ -341,7 +340,7 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
         'KNeighborsRegressor()': False,
         'DecisionTreeRegressor()': False,
     }
-    best_model_name = null
+    best_model_name = ''
 
     for model in models:
         model.fit(X_train, Y_train)
@@ -374,12 +373,73 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
         final_model = DecisionTreeRegressor()
         selected[best_model_name] = True
     else:
-        final_model = final_model
+        pass
 
     final_model = final_model.fit(X_train, Y_train)
     prediction = final_model.predict(X_test)
-    error = mean_absolute_error(Y_test, prediction)
+    # error = mean_absolute_error(Y_test, prediction)
     dump(final_model, model_path)
+
+    # ----------------------------------------------------------------------------------
+    # MODEL -- FEATURE IMPORTANCES -- START ############################################
+    model_title = type(final_model).__name__
+    importances = ''
+    if model_title == 'LinearRegression':
+        # Put simply, if an assigned coefficient is a large (negative or positive) number, it has some influence on the prediction.
+        # if the coefficient is zero, it doesn’t have any impact on the prediction
+        importances = pd.DataFrame(data={
+            'Attribute': X_train.columns,
+            'Importance': final_model.coef_
+        })
+        importances = importances.sort_values(by='Importance', ascending=False)
+
+    elif model_title == 'RandomForestRegressor':
+        importances = pd.DataFrame(data={
+            'Attribute': X_train.columns,
+            'Importance': (final_model.feature_importances_ / sum(final_model.feature_importances_)) * 100
+        })
+        importances = importances.sort_values(by='Importance', ascending=False)
+
+    elif model_title == 'KNeighborsRegressor':
+        importances = pd.DataFrame(data={
+            'Attribute': X_train.columns,
+            'Importance': (final_model.feature_importances_ / sum(final_model.feature_importances_)) * 100
+        })
+        importances = importances.sort_values(by='Importance', ascending=False)
+    elif model_title == 'DecisionTreeRegressor':
+        importances = pd.DataFrame(data={
+            'Attribute': X_train.columns,
+            'Importance': (final_model.feature_importances_ / sum(final_model.feature_importances_)) * 100
+        })
+        importances = importances.sort_values(by='Importance', ascending=False)
+
+    else:
+        pass
+
+    # Initialize empty array of insert data
+    feature_rows = []
+
+    # Iterate through the dataset and prepare insert query
+    for i, row in importances.iterrows():
+        my_row = FeatureImportances(
+            feature_index=i+1,
+            feature_name=row['Attribute'],
+            feature_criteria=criteria,
+            feature_value=row['Importance'],
+            feature_saccos=saccos_id
+        )
+        feature_rows.append(my_row)
+
+    # save our data
+    try:
+        db.session.add_all(feature_rows)
+        db.session.commit()
+    except:
+        flash('Internal server error', 'danger')
+        # return redirect(request.url)
+
+    # MODEL -- FEATURE IMPORTANCES -- END ############################################
+    # ---------------------------------------------------------------------------------------
 
     # Model pics path
     Path(MODELS_PICS_FOLDER, saccos).mkdir(parents=True, exist_ok=True)
@@ -597,6 +657,14 @@ def generate():
             try:
                 db.session.query(ActualAndPredicted).filter(
                     ActualAndPredicted.saccoss_id == saccos_id).delete()
+                db.session.commit()
+            except:
+                pass
+
+            # Delete the importances records for a saccos -- then populate with new records
+            try:
+                db.session.query(FeatureImportances).filter(
+                    FeatureImportances.feature_saccos == saccos_id).delete()
                 db.session.commit()
             except:
                 pass

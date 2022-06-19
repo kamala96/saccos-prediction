@@ -1,232 +1,349 @@
 {% extends "base.html" %} {% block head %} {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename= 'extended_beauty.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename= 'extended_beauty.css') }}"
+/>
 {% endblock %} {% block content %}
 
 <!---Containerize main page for styling--->
 <div class="page">
-    <!---Containerize paragraph and form for styling--->
-    <div class="container">
+  <!---Containerize paragraph and form for styling--->
+  <div class="container">
+    <div class="alert alert-success" role="alert">
+      <h5>{{ 'DETAILED EVALUATION OF %s' % saccos.name }}</h5>
+    </div>
 
-        <div class="alert alert-success" role="alert">
-            <h5> {{ 'DETAILED EVALUATION OF %s' % saccos.name }} </h5>
-        </div>
+    <!-- Tabs navs -->
+    <ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link active"
+          id="ex1-tab-1"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-1"
+          role="tab"
+          aria-controls="ex1-tabs-1"
+          aria-selected="true"
+          >Performance Trend</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link"
+          id="ex1-tab-2"
+          data-toggle="tab"
+          data-mdb-toggle="tab"
+          href="#ex1-tabs-2"
+          role="tab"
+          aria-controls="ex1-tabs-2"
+          aria-selected="false"
+          >Model summary</a
+        >
+      </li>
+    </ul>
+    <!-- Tabs navs -->
 
-        <!-- Tabs navs -->
-        <ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="ex1-tab-1" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-1"
-                    role="tab" aria-controls="ex1-tabs-1" aria-selected="true">Performance Trend</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="ex1-tab-2" data-toggle="tab" data-mdb-toggle="tab" href="#ex1-tabs-2" role="tab"
-                    aria-controls="ex1-tabs-2" aria-selected="false">Model summary</a>
-            </li>
-        </ul>
-        <!-- Tabs navs -->
-
-        <!-- Tabs content -->
-        <div class="tab-content" id="ex1-content">
-
-            <div class="tab-pane fade show active" id="ex1-tabs-1" role="tabpanel" aria-labelledby="ex1-tab-1">
-                <div class="card mb-2">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm" id="dataTable">
-                                <caption>
-                                    OP -> <strong>Outstanding Performance</strong>,&nbsp;
-                                    SP -> <strong>Superior Performance</strong>,&nbsp;
-                                    AP -> <strong>Avarage Performance</strong><br>
-                                    UP -> <strong>Under Performance</strong>,&nbsp;
-                                    DP -> <strong>Doubtful Performance</strong><br>
-                                </caption>
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Month</th>
-                                        <th scope="col">Core capital (TSH.)</th>
-                                        <th scope="col">Total assets (TSH.)</th>
-                                        <th scope="col">Non-performing loans (TSH.)</th>
-                                        <th scope="col">Gross Loan Portifolio/Total loans (TSH.)</th>
-                                        <th scope="col">Non-earning assets (TSH.)</th>
-                                        <th scope="col">General loan loss reserve (TSH.)</th>
-                                        <th scope="col">Gross loans (TSH.)</th>
-                                        <th scope="col">Write-offs (TSH.)</th>
-                                        <th scope="col">Recoveries (TSH.)</th>
-                                        <th scope="col">capital-adequacy (%)</th>
-                                        <th scope="col">asset-quality-01 (%)</th>
-                                        <th scope="col">asset-quality-02 (%)</th>
-                                        <th scope="col">asset-quality-03 (%)</th>
-                                        <th scope="col">asset-quality-04 (%)</th>
-                                        <th scope="col">capital-adequacy [Rating Status] (%)</th>
-                                        <th scope="col">asset-quality-01 [Rating Status] (%)</th>
-                                        <th scope="col">asset-quality-02 [Rating Status] (%)</th>
-                                        <th scope="col">asset-quality-03 [Rating Status] (%)</th>
-                                        <th scope="col">asset-quality-04 [Rating Status] (%)</th>
-                                        <th scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for e in saccos.evaluations %}
-                                    <tr>
-                                        <td>{{ e.month.strftime("%Y-%m-%d") }}</td>
-                                        <td>{{ e.cc }}</td>
-                                        <td>{{ e.ta }}</td>
-                                        <td>{{ e.npl }}</td>
-                                        <td>{{ e.glp_tl }}</td>
-                                        <td>{{ e.nea }}</td>
-                                        <td>{{ e.gllr }}</td>
-                                        <td>{{ e.gl }}</td>
-                                        <td>{{ e.wo }}</td>
-                                        <td>{{ e.rcv }}</td>
-                                        <td>{{ e.capital_adequacy }}</td>
-                                        <td>{{ e.asset_quality_01 }}</td>
-                                        <td>{{ e.asset_quality_02 }}</td>
-                                        <td>{{ e.asset_quality_03 }}</td>
-                                        <td>{{ e.asset_quality_04 }}</td>
-                                        <td>{{ e.capital_adequacy_Rating_Status }}</td>
-                                        <td>{{ e.asset_quality_01_Rating_Status }}</td>
-                                        <td>{{ e.asset_quality_02_Rating_Status }}</td>
-                                        <td>{{ e.asset_quality_03_Rating_Status }}</td>
-                                        <td>{{ e.asset_quality_04_Rating_Status }}</td>
-                                        <td>
-                                            <form method="post" action="{{ url_for('reporting.report') }}">
-                                                <input type="number" name="evaluation_id" value="{{ e.ev_id }}"
-                                                    style="display: none;">
-                                                <input type="submit" class="btn btn-primary btn-sm"
-                                                    value="Generate Report" />
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            <!-- {{ data.to_html(classes='table table-bordered table-sm', table_id="dataTable", float_format='{:10.2f}'.format, index=False, render_links=True) | safe }} -->
-                        </div>
-                    </div>
-                </div>
+    <!-- Tabs content -->
+    <div class="tab-content" id="ex1-content">
+      <div
+        class="tab-pane fade show active"
+        id="ex1-tabs-1"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-1"
+      >
+        <div class="card mb-2">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm" id="dataTable">
+                <caption>
+                  OP ->
+                  <strong>Outstanding Performance</strong
+                  >,&nbsp; SP ->
+                  <strong>Superior Performance</strong
+                  >,&nbsp; AP ->
+                  <strong>Avarage Performance</strong
+                  ><br />
+                  UP ->
+                  <strong>Under Performance</strong
+                  >,&nbsp; DP ->
+                  <strong>Doubtful Performance</strong
+                  ><br />
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Month</th>
+                    <th scope="col">Core capital (TSH.)</th>
+                    <th scope="col">Total assets (TSH.)</th>
+                    <th scope="col">Non-performing loans (TSH.)</th>
+                    <th scope="col">
+                      Gross Loan Portifolio/Total loans (TSH.)
+                    </th>
+                    <th scope="col">Non-earning assets (TSH.)</th>
+                    <th scope="col">General loan loss reserve (TSH.)</th>
+                    <th scope="col">Gross loans (TSH.)</th>
+                    <th scope="col">Write-offs (TSH.)</th>
+                    <th scope="col">Recoveries (TSH.)</th>
+                    <th scope="col">capital-adequacy (%)</th>
+                    <th scope="col">asset-quality-01 (%)</th>
+                    <th scope="col">asset-quality-02 (%)</th>
+                    <th scope="col">asset-quality-03 (%)</th>
+                    <th scope="col">asset-quality-04 (%)</th>
+                    <th scope="col">capital-adequacy [Rating Status] (%)</th>
+                    <th scope="col">asset-quality-01 [Rating Status] (%)</th>
+                    <th scope="col">asset-quality-02 [Rating Status] (%)</th>
+                    <th scope="col">asset-quality-03 [Rating Status] (%)</th>
+                    <th scope="col">asset-quality-04 [Rating Status] (%)</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for e in saccos.evaluations %}
+                  <tr>
+                    <td>{{ e.month.strftime("%Y-%m-%d") }}</td>
+                    <td>{{ e.cc }}</td>
+                    <td>{{ e.ta }}</td>
+                    <td>{{ e.npl }}</td>
+                    <td>{{ e.glp_tl }}</td>
+                    <td>{{ e.nea }}</td>
+                    <td>{{ e.gllr }}</td>
+                    <td>{{ e.gl }}</td>
+                    <td>{{ e.wo }}</td>
+                    <td>{{ e.rcv }}</td>
+                    <td>{{ e.capital_adequacy }}</td>
+                    <td>{{ e.asset_quality_01 }}</td>
+                    <td>{{ e.asset_quality_02 }}</td>
+                    <td>{{ e.asset_quality_03 }}</td>
+                    <td>{{ e.asset_quality_04 }}</td>
+                    <td>{{ e.capital_adequacy_Rating_Status }}</td>
+                    <td>{{ e.asset_quality_01_Rating_Status }}</td>
+                    <td>{{ e.asset_quality_02_Rating_Status }}</td>
+                    <td>{{ e.asset_quality_03_Rating_Status }}</td>
+                    <td>{{ e.asset_quality_04_Rating_Status }}</td>
+                    <td>
+                      <form
+                        method="post"
+                        action="{{ url_for('reporting.report') }}"
+                      >
+                        <input
+                          type="number"
+                          name="evaluation_id"
+                          value="{{ e.ev_id }}"
+                          style="display: none"
+                        />
+                        <input
+                          type="submit"
+                          class="btn btn-primary btn-sm"
+                          value="Generate Report"
+                        />
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <!-- {{ data.to_html(classes='table table-bordered table-sm', table_id="dataTable", float_format='{:10.2f}'.format, index=False, render_links=True) | safe }} -->
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="tab-pane fade" id="ex1-tabs-2" role="tabpanel" aria-labelledby="ex1-tab-2">
-                <div class="card mb-2">
-                    <div class="card-body">
-                        <div class="intro">
-                            <b>
-                                <p class="Note">
-                                    Note:
-                                    <ul>
-                                        <li>
-                                            The model in a row with the dark background is the best choice that is used
-                                            to generate the prediction model
-                                        </li>
-                                        <li>
-                                            R^2 (R2 Squared): Ranges from 0 to 1, the closer the value to 1,
-                                            the more perfectly the model is trained
-                                        </li>
-                                        <li>
-                                            MAE (Mean Absolute Error): Measures how far the predictions are from the
-                                            actual output. The lower the value the better, and 0 means the model is
-                                            perfect
-                                        </li>
-                                        <li>
-                                            RMSE (Root Mean Squared Error): Tells the average distance between the
-                                            predicted values from the model and the actual values in the dataset. The
-                                            lower the RMSE, the better a given model is able to fit a dataset
-                                        </li>
-                                    </ul>
-                                </p>
-                            </b>
+      <div
+        class="tab-pane fade"
+        id="ex1-tabs-2"
+        role="tabpanel"
+        aria-labelledby="ex1-tab-2"
+      >
+        <div class="card mb-2">
+          <div class="card-body">
+            <div class="intro">
+              <b>
+                <section style="font-size: 14px">
+                  Note:
+                  <ul>
+                    <li>
+                      The model in a row with the dark background is the best
+                      choice that is used to generate the prediction model
+                    </li>
+                    <li>
+                      R^2 (R2 Squared): Ranges from 0 to 1, the closer the value
+                      to 1, the more perfectly the model is trained
+                    </li>
+                    <li>
+                      MAE (Mean Absolute Error): Measures how far the
+                      predictions are from the actual output. The lower the
+                      value the better, and 0 means the model is perfect
+                    </li>
+                    <li>
+                      RMSE (Root Mean Squared Error): Tells the average distance
+                      between the predicted values from the model and the actual
+                      values in the dataset. The lower the RMSE, the better a
+                      given model is able to fit a dataset
+                    </li>
+                    <li>
+                      Feature importances: For Linear Regression, if an assigned
+                      value is a large (negative or positive) number, it has
+                      some influence on the prediction. If the value is zero, it
+                      doesn't have any impact on the prediction. For models
+                      other than Linear Regression, they are simply percentages
+                    </li>
+                  </ul>
+                </section>
+              </b>
+            </div>
+            <ul class="list-group">
+              {% for key, value in outcomes.items() %}
+              <div class="card mb-2">
+                <li
+                  class="list-group-item list-group-item-action list-group-item-success d-flex justify-content-between align-items-center mb-1"
+                >
+                  <a
+                    data-toggle="collapse"
+                    class="text-info"
+                    href="javascript:void(0)"
+                  >
+                    <span data-feather="folder"></span>{{ value }}
+                  </a>
+                </li>
+                <div class="table-responsive">
+                  <div class="container">
+                    <div class="row mt-2">
+                      <div class="col-sm-12 col-md-12 col-lg-6">
+                        <div class="card mb-2">
+                          <div class="card-header">LIST OF MODEL TESTED</div>
+                          <div class="card-body table-responsive">
+                            <table
+                              class="table table-sm table-bordered"
+                              width="100%"
+                              cellspacing="0"
+                              id="dataTable{{key}}"
+                            >
+                              <thead>
+                                <tr>
+                                  <th scope="col">Model</th>
+                                  <th scope="col">R^2</th>
+                                  <th scope="col">MAE</th>
+                                  <th scope="col">RMSE</th>
+                                  <th scope="col">Date Generated</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for s in saccos.prediction_models %} {% if
+                                s.performance_criteria == value %}
+                                <tr
+                                  class="{{ 'table-active' if s.selected else '' }}"
+                                >
+                                  <td>{{ s.model_used }}</td>
+                                  <td>{{ "{:.2f}".format(s.r2_score) }}</td>
+                                  <td>
+                                    {{ "{:.2f}".format(s.mean_absolute_error) }}
+                                  </td>
+                                  <td>
+                                    {{
+                                    "{:.2f}".format(s.root_mean_squared_error)
+                                    }}
+                                  </td>
+                                  <td>
+                                    {{ s.date_created.strftime("%Y-%m-%d
+                                    %H:%m:%S") }}
+                                  </td>
+                                </tr>
+                                {% endif %} {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                        <ul class="list-group">
-                            {% for key, value in outcomes.items() %}
-                            <div class="card mb-2">
-                                <li
-                                    class="list-group-item list-group-item-action list-group-item-success d-flex justify-content-between align-items-center mb-1">
-                                    <a data-toggle="collapse" class="text-info" href="javascript:void(0)">
-                                        <span data-feather="folder"></span>{{ value }}
-                                    </a>
-                                </li>
-                                <div class="table-responsive">
-                                    <div class="container">
-                                        <div class="row mt-2">
-                                            <div class="col-6">
-                                                <div class="card mb-2">
-                                                    <div class="card-header">
-                                                        LIST OF MODEL TESTED
-                                                    </div>
-                                                    <div class="card-body table-responsive">
-                                                        <table class="table table-bordered table-sm"
-                                                            id="dataTable{{key}}" width="100%" cellspacing="0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th scope="col">Model</th>
-                                                                    <th scope="col">R^2</th>
-                                                                    <th scope="col">MAE</th>
-                                                                    <th scope="col">RMSE</th>
-                                                                    <th scope="col">Date Generated</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {% for s in saccos.prediction_models %}
-                                                                {% if s.performance_criteria == value %}
-                                                                <tr class="{{ 'table-active' if s.selected else '' }}">
-                                                                    <td>{{ s.model_used }}</td>
-                                                                    <td>{{ s.r2_score }}</td>
-                                                                    <td>{{ s.mean_absolute_error }}</td>
-                                                                    <td>{{ s.root_mean_squared_error }}</td>
-                                                                    <td>{{ s.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
-                                                                    </td>
-                                                                </tr>
-                                                                {% endif %}
-                                                                {% endfor %}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="card">
-                                                    <div class="card-header">
-                                                        ACTUAL --VS-- PREDICTED (TEST DATA SET)
-                                                    </div>
-                                                    <div class="card-body table-responsive">
-                                                        <table class="table table-bordered table-sm"
-                                                            id="dataTable_diff{{key}}" width="100%" cellspacing="0">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th scope="col">Evaluation Month</th>
-                                                                    <th scope="col">Prediction Date</th>
-                                                                    <th scope="col">Actual</th>
-                                                                    <th scope="col">Predicetd</th>
-                                                                    <th scope="col">Difference</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {% for diff in saccos.actual_and_predicted %}
-                                                                {% if diff.performance_criteria == value %}
-                                                                <tr>
-                                                                    <td>{{ diff.month }}</td>
-                                                                    <td>{{ diff.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
-                                                                    </td>
-                                                                    <td>{{ diff.actual }}</td>
-                                                                    <td>{{ diff.predicted }}</td>
-                                                                    <td>{{ "{:.2f}".format(diff.predicted - diff.actual) }}
-                                                                    </td>
-                                                                </tr>
-                                                                {% endif %}
-                                                                {% endfor %}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </ul>
+                      </div>
+                      <div class="ol-sm-12 col-md-12 col-lg-6">
+                        <div class="card">
+                          <div class="card-header">
+                            ACTUAL --VS-- PREDICTED (TEST DATA SET)
+                          </div>
+                          <div class="card-body table-responsive">
+                            <table
+                              class="table table-bordered table-sm"
+                              id="dataTable_diff{{key}}"
+                              width="100%"
+                              cellspacing="0"
+                            >
+                              <thead>
+                                <tr>
+                                  <th scope="col">Evaluation Month</th>
+                                  <th scope="col">Prediction Date</th>
+                                  <th scope="col">Actual</th>
+                                  <th scope="col">Predicted</th>
+                                  <th scope="col">Difference</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for diff in saccos.actual_and_predicted %} {%
+                                if diff.performance_criteria == value %}
+                                <tr>
+                                  <td>{{ diff.month }}</td>
+                                  <td>
+                                    {{ diff.date_created.strftime("%Y-%m-%d at
+                                    %H:%m:%S") }}
+                                  </td>
+                                  <td>{{ diff.actual }}</td>
+                                  <td>{{ diff.predicted }}</td>
+                                  <td>
+                                    {{ "{:.2f}".format(diff.predicted -
+                                    diff.actual) }}
+                                  </td>
+                                </tr>
+                                {% endif %} {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <!-- {% for summary2 in model_summary %}
+                    <div class="row mt-2">
+                      <div class="col-12">
+                        <div class="card mb-2">
+                          <div class="card-header">FEATURE IMPORTANCES</div>
+                          <div class="card-body table-responsive">
+                            <table class="table table-sm">
+                              <thead>
+                                <tr>
+                                  <th scope="col">#</th>
+                                  <th scope="col">Interpretation Date</th>
+                                  <th scope="col">Feature Name</th>
+                                  <th scope="col">Feature Value</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for importance in saccos.feature_importances
+                                %} {% if importance.feature_criteria == value %}
+                                <tr>
+                                  <td>{{ importance.feature_index }}</td>
+                                  <td>
+                                    {{
+                                    importance.date_created.strftime("%Y-%m-%d
+                                    at %H:%m:%S") }}
+                                  </td>
+                                  <td>{{ importance.feature_name }}</td>
+                                  <td>
+                                    {{ "{:.2f}".format(importance.feature_value)
+                                    }}
+                                  </td>
+                                </tr>
+                                {% endif %} {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- {% for summary2 in model_summary %}
                     <a href="#">{{ summary2.performance_criteria }}</a> <br>
                     {% for summary3 in summary2.performance_criteria %}
                     {{summary3}}
@@ -235,12 +352,12 @@
                     {% endif %}
                     {% endfor %}
                     {% endfor %} -->
-                </div>
-            </div>
         </div>
-        <!-- Tabs content -->
+      </div>
+    </div>
+    <!-- Tabs content -->
 
-        <!-- {% if texts is defined %}
+    <!-- {% if texts is defined %}
         {% for text in texts %}
         <div>{{ error }}</div>
         <div class="post">
@@ -251,11 +368,8 @@
         {% else %}
         Error!
         {% endif %} -->
-
-
-    </div>
+  </div>
 </div>
 <!-- </center> -->
-
 
 {% endblock %}

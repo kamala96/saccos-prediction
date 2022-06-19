@@ -46,11 +46,12 @@
               name="saccos-name"
               required
             >
-              <option selected>Choose SACCOS...</option>
+              <option selected disabled>Choose SACCOS...</option>
               {% for saccoss in list_of_saccos %}
               <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
               {% endfor %}
             </select>
+
             <div class="custom-file">
               <input
                 type="file"
@@ -60,7 +61,7 @@
                 required
               />
               <label class="custom-file-label" for="inputGroupFile01"
-                >Choose data (csv file)...</label
+                >CSV file ..</label
               >
             </div>
             <div class="input-group-append">

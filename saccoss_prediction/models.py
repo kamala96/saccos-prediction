@@ -31,6 +31,8 @@ class Saccos(db.Model):
         'Evaluations', cascade="all,delete", backref='author', lazy=True)
     actual_and_predicted = db.relationship(
         'ActualAndPredicted', cascade="all,delete", backref='author', lazy=True)
+    feature_importances = db.relationship(
+        'FeatureImportances', cascade="all,delete", backref='author', lazy=True)
 
 
 class PredictionModels(db.Model):
@@ -85,4 +87,16 @@ class Evaluations(db.Model):
     asset_quality_03_Rating_Status = db.Column(db.String(1000))
     asset_quality_04_Rating_Status = db.Column(db.String(1000))
     saccoss_id = db.Column(
+        db.Integer, db.ForeignKey('saccos.id'), nullable=False)
+
+
+class FeatureImportances(db.Model):
+    feature_id = db.Column(db.Integer, primary_key=True)
+    feature_index = db.Column(db.Integer)
+    feature_name = db.Column(db.String(1000))
+    feature_criteria = db.Column(db.String(1000))
+    feature_value = db.Column(db.Float)
+    date_created = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
+    feature_saccos = db.Column(
         db.Integer, db.ForeignKey('saccos.id'), nullable=False)
