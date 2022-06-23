@@ -9,29 +9,6 @@ from fpdf import FPDF
 reporting = Blueprint("reporting", __name__)
 
 
-class PDF(FPDF):
-    def header(self):
-        # Logo
-        self.image(REPORTS_FOLDER+'/header-image.png', 10, 8, 33)
-        # Arial bold 15
-        self.set_font('Arial', 'B', 15)
-        # Move to the right
-        self.cell(80)
-        # Title
-        self.cell(30, 10, 'Title', 1, 0, 'C')
-        # Line break
-        self.ln(20)
-
-    # Page footer
-    def footer(self):
-        # Position at 1.5 cm from bottom
-        self.set_y(-15)
-        # Arial italic 8
-        self.set_font('Arial', 'I', 8)
-        # Page number
-        self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
-
-
 def report_title():
     current_saccos_name = 'SACCOS A'
     evaluation_month = 'Mei 31'
@@ -180,28 +157,21 @@ def report():
         evaluation = Evaluations.query.get_or_404(evaluation_id)
 
         pdf = FPDF()
-
-        # Add a page
         pdf.add_page()
+        pdf.set_xy(0, 0)
+        pdf.set_font('arial', 'B', 12)
+        pdf.cell(60)
+        pdf.cell(
+            75, 10, "A Tabular and Graphical Report of Professor Criss's Ratings by Users Charles and Mike", 0, 2, 'C')
+        pdf.cell(90, 10, " ", 0, 2, 'C')
+        pdf.cell(-40)
+        pdf.cell(50, 10, 'Question', 1, 0, 'C')
+        pdf.cell(40, 10, 'Charles', 1, 0, 'C')
+        pdf.cell(40, 10, 'Mike', 1, 2, 'C')
+        pdf.cell(-90)
+        pdf.set_font('arial', '', 12)
 
-        # set style and size of font
-        # that you want in the pdf
-        pdf.set_font("Arial", size=15)
-
-       # create a cell
-        pdf.cell(40, 10, txt=report_title(),
-                 ln=1, align='C')
-
-        # add another cell
-        pdf.cell(200, 10, txt=first_section()[0],
-                 ln=2, align='C')
-
-        # save the pdf with name .pdf
-        file_name = 'reports/'+evaluation_id+'.pdf'
-
-        response = make_response(pdf.output(
-            name=file_name, dest='F').encode('latin-1'))
-
-        response.headers['Content-Disposition'] = 'attachment; filename='+file_name
-        response.headers['Content-Type'] = 'application/pdf'
-        return response
+        pdf.cell(90, 10, " ", 0, 2, 'C')
+        pdf.cell(-30)
+        # pdf.image('barchart.png', x=None, y=None, w=0, h=0, type='', link='')
+        pdf.output('test.pdf', 'F')
