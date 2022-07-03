@@ -1,9 +1,9 @@
 from pathlib import Path
-from flask import Blueprint, make_response, request, send_file, send_from_directory
+from flask import Blueprint, make_response, render_template, request, send_file, send_from_directory
 
 from saccoss_prediction import REPORTS_FOLDER
 from saccoss_prediction.models import Evaluations
-from fpdf import FPDF
+import pdfkit
 
 
 reporting = Blueprint("reporting", __name__)
@@ -147,31 +147,22 @@ def sevnth_section():
     return heading, main_heading, content
 
 
-@reporting.route("/report", methods=['POST'])
-def report():
-    evaluation_id = request.form.get('evaluation_id')
-    if evaluation_id is None:
-        print("No data supplied")
-    else:
-        title = f"Performance Report for {evaluation_id}"
-        evaluation = Evaluations.query.get_or_404(evaluation_id)
+@reporting.route("/report/<int:report_id>")
+def report(report_id):
+    evaluation = Evaluations.query.get_or_404(report_id)
+    rendered = render_template("report.html", name=report_id)
 
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_xy(0, 0)
-        pdf.set_font('arial', 'B', 12)
-        pdf.cell(60)
-        pdf.cell(
-            75, 10, "A Tabular and Graphical Report of Professor Criss's Ratings by Users Charles and Mike", 0, 2, 'C')
-        pdf.cell(90, 10, " ", 0, 2, 'C')
-        pdf.cell(-40)
-        pdf.cell(50, 10, 'Question', 1, 0, 'C')
-        pdf.cell(40, 10, 'Charles', 1, 0, 'C')
-        pdf.cell(40, 10, 'Mike', 1, 2, 'C')
-        pdf.cell(-90)
-        pdf.set_font('arial', '', 12)
+    options = {
+        'page-size': 'A4',
+        'margin-top': '0.75in',
+        'margin-right': '0.75in',
+        'margin-bottom': '0.75in',
+        'margin-left': '0.75in',
+        'encoding': "UTF-8",
+    }
+    pdf = pdfkit.from_string(rendered, False, options=options)
 
-        pdf.cell(90, 10, " ", 0, 2, 'C')
-        pdf.cell(-30)
-        # pdf.image('barchart.png', x=None, y=None, w=0, h=0, type='', link='')
-        pdf.output('test.pdf', 'F')
+    response = make_response(pdf)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = "inline; filename=output.pdf"
+    return response

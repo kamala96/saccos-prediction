@@ -121,22 +121,12 @@
                     <td>{{ e.asset_quality_03_Rating_Status }}</td>
                     <td>{{ e.asset_quality_04_Rating_Status }}</td>
                     <td>
-                      <form
-                        method="post"
-                        action="{{ url_for('reporting.report') }}"
+                      <a
+                        type="button"
+                        href="{{ url_for('reporting.report', report_id=e.ev_id) }}"
+                        class="btn btn-outline-primary btn-sm"
+                        >Report</a
                       >
-                        <input
-                          type="number"
-                          name="evaluation_id"
-                          value="{{ e.ev_id }}"
-                          style="display: none"
-                        />
-                        <input
-                          type="submit"
-                          class="btn btn-primary btn-sm"
-                          value="Generate Report"
-                        />
-                      </form>
                     </td>
                   </tr>
                   {% endfor %}
