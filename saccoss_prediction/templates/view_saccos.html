@@ -197,6 +197,7 @@
                 </li>
                 <div class="table-responsive">
                   <div class="container">
+
                     <div class="row mt-2">
                       <div class="col-sm-12 col-md-12 col-lg-6">
                         <div class="card mb-2">
@@ -234,8 +235,7 @@
                                     }}
                                   </td>
                                   <td>
-                                    {{ s.date_created.strftime("%Y-%m-%d
-                                    %H:%m:%S") }}
+                                    {{ s.date_created.strftime("%Y-%m-%d %H:%m:%S") }}
                                   </td>
                                 </tr>
                                 {% endif %} {% endfor %}
@@ -244,7 +244,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="ol-sm-12 col-md-12 col-lg-6">
+                      <div class="col-sm-12 col-md-12 col-lg-6">
                         <div class="card">
                           <div class="card-header">
                             ACTUAL --VS-- PREDICTED (TEST DATA SET)
@@ -271,8 +271,7 @@
                                 <tr>
                                   <td>{{ diff.month }}</td>
                                   <td>
-                                    {{ diff.date_created.strftime("%Y-%m-%d at
-                                    %H:%m:%S") }}
+                                    {{ diff.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
                                   </td>
                                   <td>{{ diff.actual }}</td>
                                   <td>{{ diff.predicted }}</td>
@@ -290,7 +289,14 @@
                     </div>
 
                     <div class="row mt-2">
-                      <div class="col-12">
+                      <div class="col-sm-12 col-md-12 col-lg-6">
+                        <div class="card mb-2 bg-dark">
+                          {% set path = 'model-pics/' + saccos.current_name | lower + '/' + value + '.png' %}
+                          <img class="card-img" src="{{ url_for('static', filename = path) }}" alt="Card image">
+                        </div>
+                      </div>
+
+                      <div class="col-sm-12 col-md-12 col-lg-6">
                         <div class="card mb-2">
                           <div class="card-header">FEATURE IMPORTANCES</div>
                           <div class="card-body table-responsive">
@@ -310,8 +316,7 @@
                                   <td>{{ importance.feature_index }}</td>
                                   <td>
                                     {{
-                                    importance.date_created.strftime("%Y-%m-%d
-                                    at %H:%m:%S") }}
+                                    importance.date_created.strftime("%Y-%m-%d at %H:%m:%S") }}
                                   </td>
                                   <td>{{ importance.feature_name }}</td>
                                   <td>
@@ -325,6 +330,7 @@
                           </div>
                         </div>
                       </div>
+
                     </div>
                   </div>
                 </div>

@@ -1,11 +1,11 @@
 # This file will handle CRUD operations
 
-import sys
+import datetime
+import shutil
 from matplotlib.pyplot import title
 import numpy as np
-from sqlalchemy import false
 from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
-from .models import PredictionModels, User, Saccos
+from .models import ActualAndPredicted, Evaluations, FeatureImportances, PredictionModels, User, Saccos
 from .models import Workout
 from flask import Blueprint, flash, redirect, render_template, url_for, request, Markup
 from flask_login import current_user, login_required
@@ -98,24 +98,60 @@ def add_saccos():
     '''
     This function adds a saccos into a database.
     '''
-    saccoss = request.form.get('saccoss')
-    saccoss = saccoss.replace(" ", "-")
+    current_name = request.form.get('current_name').strip()
+    current_name = current_name.strip()
+    current_name = current_name.replace(" ", "-")
+    current_name = current_name.upper()
+
+    initial_name = request.form.get('initial_name')
+    initial_name = initial_name.strip()
+    initial_name = initial_name.replace(" ", "-")
+    initial_name = initial_name.upper()
+
+    reg_number = request.form.get('reg_number')
+    reg_number = reg_number.strip()
+    reg_number = reg_number.upper()
+
+    start_date = request.form.get('start_date')
+    start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+
+    district = request.form.get('district')
+    district = district.upper()
+
+    region = request.form.get('region')
+    region = region.strip()
+    region = region.upper()
+
+    initial_members = request.form.get('initial_members')
+
+    total_males = request.form.get('total_males')
+    total_females = request.form.get('total_females')
+    current_members = '_'.join([total_males, total_females])
 
     try:
-        exists = Saccos.query.filter_by(name=saccoss).first()
+        exists = Saccos.query.filter_by(current_name=current_name).first()
         if exists:
-            flash('Already exists', 'warning')
+            flash('This saccos can not be used, already exists', 'warning')
             return redirect(url_for('main.index'))
     except:
         flash('Oops!, internal server error', 'danger')
         return redirect(url_for('main.index'))
 
-    new_saccos = Saccos(name=saccoss)
+    new_saccos = Saccos(
+        initial_name=initial_name,
+        current_name=current_name,
+        start_date=start_date,
+        reg_number=reg_number,
+        district=district,
+        region=region,
+        start_members=initial_members,
+        current_members=current_members,
+    )
     try:
         db.session.add(new_saccos)
         db.session.commit()
         flash('Your request has been received successfuly!', 'success')
-    except:
+    except Exception as e:
         flash('Oops!, internal server error', 'danger')
     return redirect(url_for('main.index'))
 
@@ -127,6 +163,59 @@ def delete_saccos(saccos_id):
     except:
         flash('No such saccos!', 'info')
         return redirect(url_for('main.index'))
+
+    db.session.query(PredictionModels).filter(
+        PredictionModels.saccoss_id == saccos_id).delete()
+    db.session.commit()
+
+    db.session.query(Evaluations).filter(
+        Evaluations.saccoss_id == saccos_id).delete()
+    db.session.commit()
+
+    db.session.query(ActualAndPredicted).filter(
+        ActualAndPredicted.saccoss_id == saccos_id).delete()
+    db.session.commit()
+
+    db.session.query(FeatureImportances).filter(
+        FeatureImportances.feature_saccos == saccos_id).delete()
+    db.session.commit()
+
+    saccos_name = str(saccos.current_name.lower())
+    saccos_models_directory = MODELS_FOLDER+"/"+saccos_name
+    saccos_dataset_directory = UPLOAD_FOLDER+"/"+saccos_name
+
+    # To remove files
+    # Option 1
+    # file_path = '/tmp/file.txt'
+    # os.remove(file_path)
+    # os.unlink(file_path)
+    #
+    # Option 2
+    # file_path = Path('/tmp/file.txt')
+    # file_path.unlink()
+    #
+    # Pattern matching -- remove all .txt files in the /tmp directory
+    # files = glob.glob('/tmp/*.txt')
+    # f.unlink()
+    #
+    # To remove empty dir (Folders)
+    # Option 1
+    # dir_path = Path('/tmp/img')
+    # dir_path.rmdir()
+    #
+    # option 2
+    # dir_path = '/tmp/img'
+    # os.rmdir(dir_path)
+    #
+    # To remove directory with its contents
+    # dir_path = '/tmp/img'
+    # shutil.rmtree(dir_path)
+    try:
+        shutil.rmtree(saccos_models_directory)
+        shutil.rmtree(saccos_dataset_directory)
+    except OSError as e:
+        pass
+        # print("Error: %s : %s" % (e.strerror))
 
     try:
         db.session.delete(saccos)
@@ -146,23 +235,23 @@ def view_saccos(saccos_id):
         flash('No such saccos!', 'info')
         return redirect(url_for('main.index'))
 
-    filename = saccos.name.lower()
+    filename = saccos.current_name.lower()
     filename = filename.replace(" ", "_")
     filename = filename+'.csv'
 
     try:
         clean_sample = pd.read_csv(
-            UPLOAD_FOLDER+"/" + saccos.name.lower()+'/clean_'+filename, sep='\t')
+            UPLOAD_FOLDER+"/" + saccos.current_name.lower()+'/clean_'+filename, sep='\t')
         capital = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                              saccos.name.lower()+"/capital-adequacy.csv", sep='\t')
+                              saccos.current_name.lower()+"/capital-adequacy.csv", sep='\t')
         asset_1 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                              saccos.name.lower()+"/asset-quality-01.csv", sep='\t')
+                              saccos.current_name.lower()+"/asset-quality-01.csv", sep='\t')
         asset_2 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                              saccos.name.lower()+"/asset-quality-02.csv", sep='\t')
+                              saccos.current_name.lower()+"/asset-quality-02.csv", sep='\t')
         asset_3 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                              saccos.name.lower()+"/asset-quality-03.csv", sep='\t')
+                              saccos.current_name.lower()+"/asset-quality-03.csv", sep='\t')
         asset_4 = pd.read_csv(MODELS_PICS_FOLDER+"/" +
-                              saccos.name.lower()+"/asset-quality-04.csv", sep='\t')
+                              saccos.current_name.lower()+"/asset-quality-04.csv", sep='\t')
     except FileNotFoundError:
         flash(Markup('You are not yet done, please visit <a href="' + url_for('generate_model.generate') +
                      '" class="alert-link"> here </a> to generate model for this saccoss'), 'info')
@@ -177,7 +266,7 @@ def view_saccos(saccos_id):
         flash(message=e, category='danger')
         return redirect(url_for('main.index'))
 
-    title = 'SEPS - ' + saccos.name
+    title = 'SEPS - ' + saccos.current_name
     # model_summary = PredictionModels.query.filter_by(author=saccos).group_by(PredictionModels.performance_criteria).all()
     # print(clean_sample.to_html())
     return render_template(
@@ -198,7 +287,7 @@ def get_model(saccos_id: int, performance: int):
         flash('No such saccos!', 'info')
         return redirect(url_for('main.do_predict'))
 
-    saccos_name = str(saccos_data.name.lower())
+    saccos_name = str(saccos_data.current_name.lower())
     sub_path = str(OUTCOME_NAMES.get(performance))
     base_path = MODELS_FOLDER+"/"+saccos_name+"/"+sub_path+'.joblib'
 
@@ -297,7 +386,7 @@ def do_predict_post():
     features = ''
     message = ''
     model_used = ''
-    saccos = saccos_data.name
+    saccos = saccos_data.current_name
     output = 0
     ratings = ''
 

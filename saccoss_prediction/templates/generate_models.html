@@ -48,7 +48,9 @@
             >
               <option selected disabled>Choose SACCOS...</option>
               {% for saccoss in list_of_saccos %}
-              <option value="{{ saccoss.id }}">{{ saccoss.name }}</option>
+              <option value="{{ saccoss.id }}">
+                {{ saccoss.current_name }}
+              </option>
               {% endfor %}
             </select>
 

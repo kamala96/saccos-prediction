@@ -29,12 +29,81 @@
                 </div>
                 <div class="card-body">
 
-                    <form action="{{url_for('main.add_saccos')}}" method="post" enctype=multipart/form-data> <div
-                        class="input-group mb-3">
-                        <span class="input-group-text">Name</span>
-                        <input type="text" aria-label="Saccos Name" name="saccoss" class="form-control" required>
-                        <button class="btn btn-primary" type="submit">Submit</button>
-                </div>
+                    <form action="{{url_for('main.add_saccos')}}" method="post" enctype=multipart/form-data>
+                        <div class="row">
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="current_name">Current Name</span>
+                                   </div>
+                                   <input type="text" class="form-control" name="current_name" aria-label="Current Name" aria-describedby="current_name" required>
+                                </div>
+                            </div> 
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="initial_name">Initial Name</span>
+                                   </div>
+                                   <input type="text" class="form-control" name="initial_name" aria-label="Initial Name" aria-describedby="initial_name" required>
+                                </div>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="reg_number">Registration Number</span>
+                                   </div>
+                                   <input type="text" class="form-control" name="reg_number" aria-label="Registration Number" aria-describedby="reg_number" required>
+                                </div>
+                            </div> 
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="start_date">Start Date</span>
+                                   </div>
+                                   <input type="date" class="form-control" name="start_date" aria-label="Start Date" aria-describedby="start_date" required>
+                                </div>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="district">District Council</span>
+                                   </div>
+                                   <input type="text" class="form-control" name="district" aria-label="District Council" aria-describedby="district" required>
+                                </div>
+                            </div> 
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="region">Region</span>
+                                   </div>
+                                   <input type="text" class="form-control" name="region" aria-label="Region" aria-describedby="region" required>
+                                </div>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text" id="initial_members">Initial Members</span>
+                                   </div>
+                                   <input type="number" class="form-control" min="1" name="initial_members" aria-label="Initial Members" aria-describedby="initial_members" required>
+                                </div>
+                            </div> 
+                            <div class="col-lg-6 col-sm-12">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                      <span class="input-group-text" id="">Current Members</span>
+                                    </div>
+                                    <input type="number" name="total_males" class="form-control" placeholder="Males" required>
+                                    <input type="number" name="total_females" class="form-control" placeholder="Females" required>
+                                </div>
+                            </div>
+                          </div>
+                          <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
         </div>
@@ -63,17 +132,29 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Name</th>
-                            <th>Date Created</th>
+                            <th>Current Name</th>
+                            <th>Initial Name</th>
+                            <th>Members</th>
+                            <th>Date Started</th>
+                            <th>District</th>
+                            <th>Region</th>
+                            <th>Model Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for saccoss in list_of_saccos %}
+                        {% set men, women = saccoss.current_members.split('_') %}
                         <tr>
                             <td> {{ loop.index }} </td>
-                            <td> {{ saccoss.name }} </td>
-                            <td>{{ saccoss.date_created.strftime('%Y-%m-%d') }}</td>
+                            <td> {{ saccoss.current_name }} </td>
+                            <td> {{ saccoss.initial_name }} </td>
+                            <td> {{ (men | int + women | int) }} </td>
+                            <!-- <td>{f{ saccoss.start_date }}</td> -->
+                            <td>{{ saccoss.start_date.strftime('%Y-%m-%d') }}</td>
+                            <td> {{ saccoss.district }} </td>
+                            <td> {{ saccoss.region }} </td>
+                            <td> {{ 'Generated' if saccoss.prediction_models else 'Not Generated' }} </td>
                             <td>
                                 <a href="{{ url_for('main.view_saccos', saccos_id=saccoss.id) }}"
                                     class="btn btn-outline-primary btn-sm" role="button">View

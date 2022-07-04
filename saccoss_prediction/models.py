@@ -22,7 +22,14 @@ class Workout(db.Model):
 
 class Saccos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(1000))
+    initial_name = db.Column(db.String(1000))
+    current_name = db.Column(db.String(1000))
+    start_date = db.Column(db.Date)
+    reg_number = db.Column(db.String(1000))
+    district = db.Column(db.String(1000))
+    region = db.Column(db.String(1000))
+    start_members = db.Column(db.Integer)
+    current_members = db.Column(db.String(1000))
     date_created = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow)
     prediction_models = db.relationship(

@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from flask import Blueprint, flash, render_template, url_for, request, redirect, Markup
 from joblib import dump
+from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
@@ -12,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from werkzeug.utils import secure_filename
 from .models import ActualAndPredicted, Evaluations, FeatureImportances, Saccos, PredictionModels
 from . import MODELS_FOLDER, MODELS_PICS_FOLDER, UPLOAD_FOLDER, db
+import seaborn as sns
 
 import numpy as np
 import pandas as pd
@@ -313,6 +315,30 @@ def save_model(model, path):
     dump(model, path)
 
 
+def plot_actual_vs_predicted(saccos, criteria, path):
+    Actual = []
+    Predicted = []
+
+    data = ActualAndPredicted.query.with_entities(
+        ActualAndPredicted.actual, ActualAndPredicted.predicted).filter_by(saccoss_id=saccos, performance_criteria=criteria)
+
+    for i in data:
+        Actual.append(i[0])
+        Predicted.append(i[1])
+
+    plt.figure(figsize=(12, 10))
+    ax1 = sns.distplot(Actual, hist=False, color="r", label="Actual Value")
+    sns.distplot(Predicted, hist=False, color="b",
+                 label="Fitted Values", ax=ax1)
+
+    plt.title('Actual vs Predicted Values for '+criteria)
+    plt.xlabel('Actual ' + criteria + ' (%)')
+    plt.ylabel('Predicted ' + criteria + ' (%)')
+    # plt.show()
+    # plt.close()
+    plt.savefig(path)
+
+
 def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     models = [LinearRegression(), RandomForestRegressor(),
               KNeighborsRegressor(), DecisionTreeRegressor()]
@@ -383,7 +409,10 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     # ----------------------------------------------------------------------------------
     # MODEL -- FEATURE IMPORTANCES -- START ############################################
     model_title = type(final_model).__name__
-    importances = ''
+    importances = pd.DataFrame(data={
+        'Attribute': X_train.columns,
+        'Importance': 0,
+    })
     if model_title == 'LinearRegression':
         # Put simply, if an assigned coefficient is a large (negative or positive) number, it has some influence on the prediction.
         # if the coefficient is zero, it doesn’t have any impact on the prediction
@@ -401,11 +430,12 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
         importances = importances.sort_values(by='Importance', ascending=False)
 
     elif model_title == 'KNeighborsRegressor':
-        importances = pd.DataFrame(data={
-            'Attribute': X_train.columns,
-            'Importance': (final_model.feature_importances_ / sum(final_model.feature_importances_)) * 100
-        })
-        importances = importances.sort_values(by='Importance', ascending=False)
+        pass
+        # importances = pd.DataFrame(data={
+        #     'Attribute': X_train.columns,
+        #     'Importance': (final_model.feature_importances_ / sum(final_model.feature_importances_)) * 100
+        # })
+        # importances = importances.sort_values(by='Importance', ascending=False)
     elif model_title == 'DecisionTreeRegressor':
         importances = pd.DataFrame(data={
             'Attribute': X_train.columns,
@@ -441,25 +471,9 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     # MODEL -- FEATURE IMPORTANCES -- END ############################################
     # ---------------------------------------------------------------------------------------
 
-    # Model pics path
-    Path(MODELS_PICS_FOLDER, saccos).mkdir(parents=True, exist_ok=True)
-    model_predictions_path = MODELS_PICS_FOLDER+"/"+saccos+"/"+criteria+'.csv'
-
-    # fig, ax = plt.subplots(figsize=(6, 4))
-    # # plt.scatter(X_test, Y_test, color="red")
-    # plt.plot(Y_test, prediction, color="green")
-    # plt.title("Salary vs Experience (Testing set)")
-    # plt.xlabel("Years of Experience")
-    # plt.ylabel("Salary")
-    # # plt.show()
-
-    # fig.savefig(model_pics_path)
-    # pd.DataFrame(model.coef_, x.columns, columns = ['Coeff'])
-
     # Preparing and recording actual vs predicted
     final_df = pd.DataFrame(data=Y_test)
     final_df['predicted'] = prediction
-    final_df.to_csv(model_predictions_path, sep='\t')
 
     # Initialize empty array of insert data
     actual_and_predicted_rows = []
@@ -479,6 +493,15 @@ def loop_models(X_train, X_test, Y_train, Y_test, saccos_id, saccos, criteria):
     # save our data
     db.session.add_all(actual_and_predicted_rows)
     db.session.commit()
+
+    # Now create visualizations according to db
+    Path(MODELS_PICS_FOLDER, saccos).mkdir(parents=True, exist_ok=True)
+    model_predictions_path = MODELS_PICS_FOLDER+"/"+saccos+"/"+criteria+'.csv'
+    model_pics_path = MODELS_PICS_FOLDER+"/"+saccos+"/"+criteria+'.png'
+    final_df.to_csv(model_predictions_path, sep='\t')
+    plot_actual_vs_predicted(saccos_id, criteria, model_pics_path)
+
+    # --------------------------------------------------------------
 
     # Recording model informations
     data_rows = []
@@ -535,20 +558,20 @@ def generate():
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            Path(UPLOAD_FOLDER, full_saccos.name.lower()).mkdir(
+            Path(UPLOAD_FOLDER, full_saccos.current_name.lower()).mkdir(
                 exist_ok=True)
             # some custom file name
-            file.filename = renamed_file_name(full_saccos.name)
+            file.filename = renamed_file_name(full_saccos.current_name)
             # some custom file name
             filename = secure_filename(file.filename)
             file.save(os.path.join(UPLOAD_FOLDER,
-                      full_saccos.name.lower(), filename))
+                      full_saccos.current_name.lower(), filename))
 
-            data = read_data(filename, full_saccos.name.lower())
+            data = read_data(filename, full_saccos.current_name.lower())
             data = pre_processing(data)
             data = further_preprocessing(data)
             data.to_csv(UPLOAD_FOLDER+"/" +
-                        full_saccos.name.lower()+'/clean_'+filename, sep='\t')
+                        full_saccos.current_name.lower()+'/clean_'+filename, sep='\t')
 
             # Delete the evaluation records for a saccos -- then populate with new records
             try:
@@ -670,15 +693,15 @@ def generate():
                 pass
 
             model_1_process = loop_models(
-                X_train_1, X_test_1, y_train_1, y_test_1, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(1))
+                X_train_1, X_test_1, y_train_1, y_test_1, saccos_id, full_saccos.current_name.lower(), OUTCOME_NAMES.get(1))
             model_2_process = loop_models(
-                X_train_2, X_test_2, y_train_2, y_test_2, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(2))
+                X_train_2, X_test_2, y_train_2, y_test_2, saccos_id, full_saccos.current_name.lower(), OUTCOME_NAMES.get(2))
             model_3_process = loop_models(
-                X_train_3, X_test_3, y_train_3, y_test_3, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(3))
+                X_train_3, X_test_3, y_train_3, y_test_3, saccos_id, full_saccos.current_name.lower(), OUTCOME_NAMES.get(3))
             model_4_process = loop_models(
-                X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(4))
+                X_train_4, X_test_4, y_train_4, y_test_4, saccos_id, full_saccos.current_name.lower(), OUTCOME_NAMES.get(4))
             model_5_process = loop_models(
-                X_train_5, X_test_5, y_train_5, y_test_5, saccos_id, full_saccos.name.lower(), OUTCOME_NAMES.get(5))
+                X_train_5, X_test_5, y_train_5, y_test_5, saccos_id, full_saccos.current_name.lower(), OUTCOME_NAMES.get(5))
 
             # ml_linear_1 = LinearRegression()
             # ml_linear_1.fit(X_train_1, y_train_1)
@@ -703,19 +726,19 @@ def generate():
             # score_4 = round(r2_score(y_test_4, y_pred_4) * 100, 2)
             # score_5 = round(r2_score(y_test_5, y_pred_5) * 100, 2)
 
-            # Path(MODELS_FOLDER, full_saccos.name.lower()).mkdir(
+            # Path(MODELS_FOLDER, full_saccos.current_name.lower()).mkdir(
             #     exist_ok=True)
 
             # model_path_1 = MODELS_FOLDER+"/" + \
-            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(1)+'.joblib'
+            #     full_saccos.current_name.lower()+"/"+OUTCOME_NAMES.get(1)+'.joblib'
             # model_path_2 = MODELS_FOLDER+"/" + \
-            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(2)+'.joblib'
+            #     full_saccos.current_name.lower()+"/"+OUTCOME_NAMES.get(2)+'.joblib'
             # model_path_3 = MODELS_FOLDER+"/" + \
-            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(3)+'.joblib'
+            #     full_saccos.current_name.lower()+"/"+OUTCOME_NAMES.get(3)+'.joblib'
             # model_path_4 = MODELS_FOLDER+"/" + \
-            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(4)+'.joblib'
+            #     full_saccos.current_name.lower()+"/"+OUTCOME_NAMES.get(4)+'.joblib'
             # model_path_5 = MODELS_FOLDER+"/" + \
-            #     full_saccos.name.lower()+"/"+OUTCOME_NAMES.get(5)+'.joblib'
+            #     full_saccos.current_name.lower()+"/"+OUTCOME_NAMES.get(5)+'.joblib'
 
             # saving model into a file
             # dump(ml_linear_1, model_path_1)
@@ -753,7 +776,7 @@ def generate():
             # db.session.commit()
 
             # cross_val_score(LinearRegression(), X, y)
-            flash(Markup('Re-generation successed for '+full_saccos.name +
+            flash(Markup('Re-generation successed for '+full_saccos.current_name +
                   '. Please visit <a href="' + url_for('main.view_saccos', saccos_id=saccos_id) + '" class="alert-link"> here </a> for the detailed generation info'), category="success")
             # return str(score_1)
             return redirect(url_for('generate_model.generate'))
